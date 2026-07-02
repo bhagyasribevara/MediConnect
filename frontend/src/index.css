@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #FFFFFF;
+  --color-secondary: #00BFA6;
+  --color-accent: #EBF8F6;
+  --color-dark: #1E293B;
+  --color-clay: #F0F4F8;
+  
+  --shadow-clay: inset 4px 4px 10px #d1d9e6, inset -4px -4px 10px #ffffff, 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+  --shadow-clay-hover: inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #ffffff, 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-clay);
+    color: var(--color-dark);
+    font-family: sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
