@@ -219,13 +219,13 @@ export default function App() {
                 </View>
                 <View className="p-4 bg-red-50 border border-red-200 rounded-xl">
                   <Text className="font-bold text-red-700 mb-1">Abnormal Values</Text>
-                  {medlensResult.abnormal_values?.map((val: string, i: number) => (
+                  {medlensResult.abnormal_values?.map((val, i) => (
                     <Text key={i} className="text-gray-800">• {val}</Text>
                   ))}
                 </View>
                 <View className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
                   <Text className="font-bold text-blue-700 mb-1">Recommendations</Text>
-                  {medlensResult.recommendations?.map((rec: string, i: number) => (
+                  {medlensResult.recommendations?.map((rec, i) => (
                     <Text key={i} className="text-gray-800">• {rec}</Text>
                   ))}
                 </View>
