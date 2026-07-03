@@ -1,3 +1,4 @@
+import "./global.css";
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, TextInput, Modal } from 'react-native';
 

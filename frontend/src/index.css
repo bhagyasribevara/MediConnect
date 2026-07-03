@@ -4,11 +4,11 @@
   --color-primary: #FFFFFF;
   --color-secondary: #00BFA6;
   --color-accent: #EBF8F6;
-  --color-dark: #1E293B;
-  --color-clay: #F0F4F8;
+  --color-dark: #006D5E; /* Deep readable medical greenish blue text */
+  --color-clay: #FFFFFF;
   
-  --shadow-clay: inset 4px 4px 10px #d1d9e6, inset -4px -4px 10px #ffffff, 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
-  --shadow-clay-hover: inset 2px 2px 5px #d1d9e6, inset -2px -2px 5px #ffffff, 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
+  --shadow-clay: inset 3px 3px 8px #d9eae6, inset -3px -3px 8px #ffffff, 6px 6px 12px #d9eae6, -6px -6px 12px #ffffff;
+  --shadow-clay-hover: inset 1px 1px 4px #d9eae6, inset -1px -1px 4px #ffffff, 3px 3px 6px #d9eae6, -3px -3px 6px #ffffff;
 }
 
 @layer base {

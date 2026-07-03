@@ -92,6 +92,7 @@ def districtadmin_dashboard(current_user):
 @dashboard_bp.route('/superadmin', methods=['GET'])
 @token_required
 def superadmin_dashboard(current_user):
+    print("DEBUG SUPERADMIN ROUTE:", current_user.username, "Role:", current_user.role.name if current_user.role else "None")
     if current_user.role.name != 'SuperAdmin':
         return jsonify({'message': 'Unauthorized'}), 403
         
