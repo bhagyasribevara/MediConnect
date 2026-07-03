@@ -1,5 +1,8 @@
+# pyrefly: ignore [unexpected-keyword]
+# pyright: ignore[reportCallIssue]
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from flask import Blueprint, request, jsonify
 from dashboard import token_required
 from models import db, PatientRecord, Patient
@@ -8,7 +11,9 @@ medlens_bp = Blueprint('medlens', __name__)
 
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
 if gemini_api_key:
-    genai.configure(api_key=gemini_api_key)
+    client = genai.Client(api_key=gemini_api_key)
+else:
+    client = None
 
 @medlens_bp.route('/upload', methods=['POST'])
 @token_required
@@ -41,12 +46,13 @@ def upload_report(current_user):
     """
 
     try:
-        model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash-latest',
-            system_instruction=system_instruction
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=report_text,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction
+            )
         )
-        
-        response = model.generate_content(report_text)
         
         # Clean the response to ensure it's valid JSON
         result = response.text.replace("```json", "").replace("```", "").strip()
@@ -60,9 +66,13 @@ def upload_report(current_user):
             patient = Patient.query.filter_by(user_id=current_user.id).first()
             if patient:
                 record = PatientRecord(
+                    # pyrefly: ignore [unexpected-keyword]
                     patient_id=patient.id,
+                    # pyrefly: ignore [unexpected-keyword]
                     record_type='Report',
+                    # pyrefly: ignore [unexpected-keyword]
                     ai_summary=structured_data.get('summary'),
+                    # pyrefly: ignore [unexpected-keyword]
                     ai_abnormal_values=", ".join(structured_data.get('abnormal_values', []))
                 )
                 db.session.add(record)
