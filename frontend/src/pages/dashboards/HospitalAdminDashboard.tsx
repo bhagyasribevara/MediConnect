@@ -32,6 +32,58 @@ export default function HospitalAdminDashboard() {
   const [isAddDoctorModalOpen, setIsAddDoctorModalOpen] = useState(false);
   const [newDoctor, setNewDoctor] = useState({ username: '', email: '', password: '', department: '', hospital_id: 1 });
 
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [requestForm, setRequestForm] = useState({ medicine_name: 'Paracetamol 500mg', requested_quantity: 1000 });
+  const [procurements, setProcurements] = useState<any[]>([
+    { id: 201, medicine: 'Paracetamol 500mg', qty: 1000, status: 'Approved' },
+    { id: 202, medicine: 'ORS Sachets', qty: 500, status: 'Pending Approval' }
+  ]);
+
+  const [isBedAllocationOpen, setIsBedAllocationOpen] = useState(false);
+  const [selectedBed, setSelectedBed] = useState<number | null>(null);
+  const [bedAllocationForm, setBedAllocationForm] = useState({ patientName: '', wardType: 'General' });
+
+  // Bed Grid array
+  const [bedsGrid, setBedsGrid] = useState<Array<{ id: number; type: 'General' | 'ICU' | 'Emergency'; occupied: boolean; patient?: string }>>([
+    { id: 1, type: 'ICU', occupied: true, patient: 'Aarav Kumar' },
+    { id: 2, type: 'ICU', occupied: false },
+    { id: 3, type: 'General', occupied: true, patient: 'Priya Sharma' },
+    { id: 4, type: 'General', occupied: false },
+    { id: 5, type: 'Emergency', occupied: false },
+    { id: 6, type: 'Emergency', occupied: true, patient: 'Patient Demo' }
+  ]);
+
+  // Doctor stats for appointments
+  const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
+  const { data: doctorStats = [], isLoading: statsLoading } = useQuery({
+    queryKey: ['hospitalStats', dateStr],
+    queryFn: async () => {
+      const res = await api.get(`/appointment/hospital/stats?hospital_id=1&date=${dateStr}`);
+      return res.data;
+    }
+  });
+
+  // Blood bank reserves
+  const [bloodStock] = useState<Array<{ type: string; qty: number }>>([
+    { type: 'A+', qty: 12 },
+    { type: 'B+', qty: 15 },
+    { type: 'O+', qty: 6 },
+    { type: 'O-', qty: 3 }
+  ]);
+
+  // Sync real-time socket events
+  useEffect(() => {
+    const socket = io('http://127.0.0.1:5000');
+    socket.on('inventory_approved', (data) => {
+      setProcurements(prev => prev.map(p => p.medicine === data.medicine ? { ...p, status: 'Approved' } : p));
+    });
+    socket.on('slot_updated', () => queryClient.invalidateQueries({ queryKey: ['hospitalStats'] }));
+    socket.on('queue_updated', () => queryClient.invalidateQueries({ queryKey: ['hospitalStats'] }));
+
+    return () => { socket.disconnect(); };
+  }, [queryClient]);
+  const { data: metrics, isLoading } = useQuery({
+    queryKey: ['hospitalAdminMetrics'],
   // Fetch Data
   const { data: dashboardData } = useQuery({
     queryKey: ['hospitaladmin_dashboard'],
@@ -105,6 +157,23 @@ export default function HospitalAdminDashboard() {
 
   const handleAddDoctor = (e: React.FormEvent) => {
     e.preventDefault();
+    setDoctorsList(prev => [...prev, { id: Date.now(), name: doctorForm.name, department: doctorForm.department, shifts: doctorForm.shifts, phone: doctorForm.phone, duty: 'On Duty' }]);
+    setIsDoctorModalOpen(false);
+    setDoctorForm({ name: '', department: 'Cardiology', shifts: 'Morning (09am - 05pm)', phone: '' });
+  };
+
+  const handleApproveAppointment = (id: number) => {
+    alert("Appointment successfully approved!");
+  };
+
+  const handleAllocateBedSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedBed !== null) {
+      setBedsGrid(prev => prev.map(b => b.id === selectedBed ? { ...b, occupied: true, patient: bedAllocationForm.patientName, type: bedAllocationForm.wardType as any } : b));
+      setIsBedAllocationOpen(false);
+      setBedAllocationForm({ patientName: '', wardType: 'General' });
+      setSelectedBed(null);
+    }
     addDoctorMutation.mutate(newDoctor);
   };
 
@@ -167,6 +236,91 @@ export default function HospitalAdminDashboard() {
               ))}
             </div>
 
+        {/* TAB 6: APPOINTMENTS BOOK */}
+        {activeTab === 'appointments' && (
+          <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-dark">Doctor-wise Appointment Statistics</h3>
+              <input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)} className="text-xs px-3 py-2 border rounded-xl outline-none border-accent/40 bg-white shadow-inner" />
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-accent/15 text-secondary/70 text-xs">
+                    <th className="py-2.5 px-4 font-semibold">Doctor Name</th>
+                    <th className="py-2.5 px-4 font-semibold">Department</th>
+                    <th className="py-2.5 px-4 font-semibold">Total Slots</th>
+                    <th className="py-2.5 px-4 font-semibold">Booked Consultations</th>
+                    <th className="py-2.5 px-4 font-semibold">Wait/IP Status</th>
+                    <th className="py-2.5 px-4 font-semibold">Completed Consults</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs text-dark">
+                  {statsLoading ? (
+                    <tr><td colSpan={6} className="py-4 text-center text-secondary/60 font-bold">Loading stats...</td></tr>
+                  ) : doctorStats.length === 0 ? (
+                    <tr><td colSpan={6} className="py-4 text-center text-secondary/60">No doctor data retrieved.</td></tr>
+                  ) : (
+                    doctorStats.map((stat: any, idx: number) => (
+                      <tr key={idx} className="border-b border-accent/15 hover:bg-accent/10">
+                        <td className="py-2.5 px-4 font-bold text-dark flex items-center gap-2">
+                          {stat.doctor_name}
+                          {stat.is_on_leave && <span className="bg-red-100 text-red-600 px-1 py-0.5 rounded text-[9px]">ON LEAVE</span>}
+                        </td>
+                        <td className="py-2.5 px-4 text-secondary/70">{stat.department}</td>
+                        <td className="py-2.5 px-4 font-bold">{stat.slots}</td>
+                        <td className="py-2.5 px-4 text-secondary font-bold">
+                          {stat.booked}
+                        </td>
+                        <td className="py-2.5 px-4 text-yellow-600 font-bold">{stat.pending} Pending</td>
+                        <td className="py-2.5 px-4 text-green-600 font-bold">{stat.completed} Completed</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: BLOOD BANK RESERVES */}
+        {activeTab === 'blood' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 lg:col-span-1 space-y-4">
+              <h3 className="text-sm font-bold text-dark">Active Blood Stock</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {bloodStock.map((b) => (
+                  <div key={b.type} className="p-4 bg-red-50/50 border border-red-200/50 rounded-xl flex flex-col items-center justify-center">
+                    <span className="text-lg font-black text-red-650 mb-1">{b.type}</span>
+                    <span className="text-sm font-bold text-secondary/80">{b.qty} Bags</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 lg:col-span-2 space-y-4">
+              <h3 className="text-sm font-bold text-dark">Register Donor Record</h3>
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  alert("Donor recorded and registered.");
+                }} 
+                className="space-y-4 text-xs"
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-secondary/60 font-bold mb-1">Donor Name</label>
+                    <input type="text" className="w-full px-3 py-2 border border-accent/40 rounded-xl bg-white outline-none" required />
+                  </div>
+                  <div>
+                    <label className="block text-secondary/60 font-bold mb-1">Blood Type</label>
+                    <select className="w-full px-3 py-2 border border-accent/40 rounded-xl bg-white outline-none">
+                      <option>O+</option>
+                      <option>A+</option>
+                      <option>B+</option>
+                      <option>AB+</option>
+                    </select>
             {/* Sidebar Footer */}
             <div className="mt-auto pt-6 border-t border-white/20">
               <div className="flex items-center gap-3 mb-4">

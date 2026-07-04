@@ -16,6 +16,7 @@ from ai_copilot import copilot_bp
 from inventory import inventory_bp
 from patient import patient_bp
 from medlens import medlens_bp
+from appointment import appointment_bp
 from doctor_management import doctor_mgmt_bp
 from admin_management import admin_management_bp
 
@@ -50,6 +51,7 @@ def create_app(config_class=Config):
     app.register_blueprint(inventory_bp, url_prefix='/api/inventory')
     app.register_blueprint(patient_bp, url_prefix='/api/patient')
     app.register_blueprint(medlens_bp, url_prefix='/api/medlens')
+    app.register_blueprint(appointment_bp, url_prefix='/api/appointment')
     app.register_blueprint(doctor_mgmt_bp, url_prefix='/api/doctor')
     app.register_blueprint(admin_management_bp, url_prefix='/api/admin')
 

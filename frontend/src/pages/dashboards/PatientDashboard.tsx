@@ -1,8 +1,14 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
+<<<<<<< HEAD
 import { predictDisease } from '../../services/ai_api';
+=======
+import { io } from 'socket.io-client';
+
+const socket = io('http://127.0.0.1:5000');
+>>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
 
 // Icons as inline SVGs
 const HomeIcon = () => (
@@ -65,10 +71,33 @@ export default function PatientDashboard() {
   const [isLensLoading, setIsLensLoading] = useState(false);
 
   // Appointment states
-  const [bookingForm, setBookingForm] = useState({ hospital: 'City General Hospital', doctor: 'Dr. Sarah Connor', date: '', time: '', reason: '' });
+  const [bookingForm, setBookingForm] = useState({ hospital: '1', doctor: '1', date: new Date().toISOString().split('T')[0], time: '', reason: '' });
+  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [queueState, setQueueState] = useState<any>(null);
 
+  const queryClient = useQueryClient();
+
+  const { data: slots = [] } = useQuery({
+    queryKey: ['availableSlots', bookingForm.doctor, bookingForm.date],
+    queryFn: async () => {
+      if (!bookingForm.doctor || !bookingForm.date) return [];
+      const res = await api.get(`/appointment/slots?doctor_id=${bookingForm.doctor}&date=${bookingForm.date}`);
+      return res.data;
+    },
+    enabled: !!bookingForm.doctor && !!bookingForm.date
+  });
+
+  useEffect(() => {
+    socket.on('slot_updated', (data) => {
+      if (data.doctor_id == bookingForm.doctor && data.date == bookingForm.date) {
+        queryClient.invalidateQueries({ queryKey: ['availableSlots', bookingForm.doctor, bookingForm.date] });
+      }
+    });
+    return () => {
+      socket.off('slot_updated');
+    };
+  }, [queryClient, bookingForm.doctor, bookingForm.date]);
   // EMR filters
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -153,15 +182,25 @@ export default function PatientDashboard() {
     setIsPaymentOpen(true);
   };
 
-  const handleConfirmPayment = () => {
-    setIsPaymentOpen(false);
-    setQueueState({
-      ticket: 'MC-2940',
-      queuePosition: 3,
-      waitTime: '25 mins',
-      hospital: bookingForm.hospital,
-      doctor: bookingForm.doctor
-    });
+  const handleConfirmPayment = async () => {
+    try {
+      const res = await api.post('/appointment/book', {
+        patient_id: 1, // Prototype patient id
+        slot_id: selectedSlotId
+      });
+      setIsPaymentOpen(false);
+      setQueueState({
+        ticket: `MC-${res.data.appointment_id}`,
+        queuePosition: res.data.queue_number,
+        waitTime: 'Wait for notification',
+        hospital: bookingForm.hospital,
+        doctor: bookingForm.doctor
+      });
+      alert('Appointment booked successfully!');
+    } catch(e: any) {
+      alert(e.response?.data?.error || 'Failed to book slot');
+      setIsPaymentOpen(false);
+    }
   };
 
   return (
@@ -488,9 +527,9 @@ export default function PatientDashboard() {
                       onChange={(e) => setBookingForm({...bookingForm, doctor: e.target.value})}
                       className="w-full text-xs px-3 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-secondary"
                     >
-                      <option>Dr. Sarah Connor (Cardiology)</option>
-                      <option>Dr. Bruce Banner (Pathology)</option>
-                      <option>Dr. Stephen Strange (Neurology)</option>
+                      <option value="1">Dr. Sarah Connor (Cardiology)</option>
+                      <option value="2">Dr. Bruce Banner (Pathology)</option>
+                      <option value="3">Dr. Stephen Strange (Neurology)</option>
                     </select>
                   </div>
                 </div>
@@ -506,20 +545,32 @@ export default function PatientDashboard() {
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs text-secondary/80 font-bold mb-1">Preferred Time Slot</label>
-                    <select 
-                      value={bookingForm.time}
-                      onChange={(e) => setBookingForm({...bookingForm, time: e.target.value})}
-                      className="w-full text-xs px-3 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-secondary"
-                      required
-                    >
-                      <option value="">Choose slot...</option>
-                      <option>09:00 AM - 10:00 AM</option>
-                      <option>11:00 AM - 12:00 PM</option>
-                      <option>02:00 PM - 03:00 PM</option>
-                      <option>04:00 PM - 05:00 PM</option>
-                    </select>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-secondary/80 font-bold mb-1">Live Appointment Slots</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {slots.length === 0 && <p className="text-xs text-secondary/70 col-span-4">No slots generated for this date.</p>}
+                      {slots.map((s: any) => {
+                        let colorClass = 'bg-accent/40 text-secondary border-accent';
+                        if (s.status === 'Full') colorClass = 'bg-red-50 border-red-200 text-red-500 opacity-50 cursor-not-allowed';
+                        else if (s.status === 'Partially Available') colorClass = 'bg-yellow-50 border-yellow-300 text-yellow-700';
+                        else colorClass = 'bg-green-50 border-green-300 text-green-700';
+                        
+                        const isSelected = selectedSlotId === s.id;
+                        
+                        return (
+                          <button
+                            type="button"
+                            key={s.id}
+                            disabled={s.status === 'Full'}
+                            onClick={() => { setSelectedSlotId(s.id); setBookingForm({...bookingForm, time: s.start_time}); }}
+                            className={`p-2 border rounded-xl flex flex-col items-center justify-center transition-all ${isSelected ? 'ring-2 ring-secondary shadow-md' : 'shadow-sm'} ${colorClass}`}
+                          >
+                            <span className="font-bold text-xs">{s.start_time.substring(0,5)}</span>
+                            <span className="text-[9px] mt-0.5">{s.status === 'Full' ? 'Slot Full' : `${s.remaining_count} seats left`}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 

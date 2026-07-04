@@ -116,6 +116,68 @@ class PatientRecord(db.Model):
     
     patient = db.relationship('Patient', backref='records')
 
+<<<<<<< HEAD
+class DoctorAvailability(db.Model):
+    __tablename__ = 'doctor_availability'
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    status = db.Column(db.Enum('Available', 'Half-day', 'Leave', 'Emergency'), nullable=False)
+    
+    doctor = db.relationship('Doctor', backref='availabilities')
+
+class DoctorLeave(db.Model):
+    __tablename__ = 'doctor_leaves'
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
+    leave_date = db.Column(db.Date, nullable=False)
+    leave_type = db.Column(db.Enum('Full-day', 'Half-day', 'Emergency', 'Weekly off', 'Vacation'), nullable=False)
+    
+    doctor = db.relationship('Doctor', backref='leaves')
+
+class Slot(db.Model):
+    __tablename__ = 'slots'
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    capacity = db.Column(db.Integer, default=10)
+    booked_count = db.Column(db.Integer, default=0)
+    remaining_count = db.Column(db.Integer, default=10)
+    status = db.Column(db.Enum('Available', 'Partially Available', 'Full', 'Unavailable'), default='Available')
+    
+    doctor = db.relationship('Doctor', backref='slots')
+    hospital = db.relationship('Hospital', backref='slots')
+
+class Appointment(db.Model):
+    __tablename__ = 'appointments'
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=False)
+    slot_id = db.Column(db.Integer, db.ForeignKey('slots.id'), nullable=False)
+    queue_number = db.Column(db.Integer, nullable=False)
+    booking_time = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    appointment_status = db.Column(db.Enum('Booked', 'Cancelled', 'Completed', 'Rescheduled'), default='Booked')
+    
+    patient = db.relationship('Patient', backref='appointments')
+    doctor = db.relationship('Doctor', backref='appointments')
+    hospital = db.relationship('Hospital', backref='appointments')
+    slot = db.relationship('Slot', backref='appointments')
+
+class Queue(db.Model):
+    __tablename__ = 'queues'
+    id = db.Column(db.Integer, primary_key=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id'), nullable=False)
+    queue_number = db.Column(db.Integer, nullable=False)
+    current_status = db.Column(db.Enum('Waiting', 'In Progress', 'Completed', 'Skipped', 'Cancelled'), default='Waiting')
+    
+    appointment = db.relationship('Appointment', backref=db.backref('queue_entry', uselist=False))
+=======
 class DoctorShift(db.Model):
     __tablename__ = 'doctor_shifts'
     id = db.Column(db.Integer, primary_key=True)
@@ -164,6 +226,7 @@ class DoctorAttendance(db.Model):
     
     doctor = db.relationship('Doctor', backref='attendance_records')
 
+<<<<<<< HEAD
 
 # ═══════════════════════════════════════════════════════════════════════════
 # AI/ML Models — Prediction Logs, Model Metadata, Training Logs, AI Alerts
@@ -224,3 +287,6 @@ class AIAlert(db.Model):
     confidence = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+=======
+>>>>>>> db6ce3f5d93f35bf28d43cd306971e624434d556
+>>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
