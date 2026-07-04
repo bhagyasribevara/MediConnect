@@ -52,7 +52,7 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
 
   // Sync real-time socket alerts for notifications
   useEffect(() => {
-    const socket = io('http://127.0.0.1:5000');
+    const socket = io('http://127.0.0.1:5000', { transports: ['polling'] });
     socket.on('new_inventory_request', (data) => {
       setNotifications(prev => [
         { id: Date.now(), text: `New Request from ${data.hospital}: ${data.quantity}x ${data.medicine}`, time: 'Just now', type: 'action' },
@@ -124,22 +124,22 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
     <div className="min-h-screen flex bg-clay text-dark transition-colors duration-200">
       
       {/* SIDEBAR */}
-      <aside className={`bg-white border-r border-accent/35 flex flex-col justify-between transition-all duration-300 z-20 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside className={`bg-secondary text-white border-r border-secondary-dark flex flex-col justify-between transition-all duration-300 z-20 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
         <div>
           {/* Logo / Brand */}
-          <div className="h-16 flex items-center px-4 justify-between border-b border-accent/25">
+          <div className="h-16 flex items-center px-4 justify-between border-b border-white/20">
             {!isSidebarCollapsed && (
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-md shadow-secondary/30">M</div>
-                <span className="font-extrabold text-lg text-dark tracking-wide">Medi<span className="text-secondary">Connect</span></span>
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-secondary font-bold text-lg shadow-md">M</div>
+                <span className="font-extrabold text-lg text-white tracking-wide">MediConnect</span>
               </div>
             )}
             {isSidebarCollapsed && (
-              <div className="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center text-white font-bold text-lg mx-auto shadow-md">M</div>
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-secondary font-bold text-lg mx-auto shadow-md">M</div>
             )}
             <button 
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="p-1.5 hover:bg-accent/40 rounded-lg text-secondary hover:text-[#00a892] transition-colors"
+              className="p-1.5 hover:bg-white/20 rounded-lg text-white transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
@@ -157,11 +157,11 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     isActive 
-                      ? 'bg-accent text-secondary shadow-sm shadow-secondary/10' 
-                      : 'text-secondary/70 hover:text-secondary hover:bg-accent/35'
+                      ? 'bg-white/20 text-white shadow-sm' 
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <div className={`w-5 h-5 flex items-center justify-center ${isActive ? 'text-secondary' : 'text-secondary/40'}`}>
+                  <div className={`w-5 h-5 flex items-center justify-center ${isActive ? 'text-white' : 'text-white/70'}`}>
                     {tab.icon}
                   </div>
                   {!isSidebarCollapsed && <span>{tab.label}</span>}
@@ -172,21 +172,21 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
         </div>
 
         {/* Footer Role/User & Logout */}
-        <div className="p-4 border-t border-accent/25 space-y-3">
+        <div className="p-4 border-t border-white/20 space-y-3">
           {!isSidebarCollapsed && (
-            <div className="flex items-center gap-3 bg-accent/25 p-2 rounded-xl">
-              <div className="w-9 h-9 bg-secondary text-white font-bold rounded-lg flex items-center justify-center shadow-md">
+            <div className="flex items-center gap-3 bg-white/10 p-2 rounded-xl">
+              <div className="w-9 h-9 bg-white text-secondary font-bold rounded-lg flex items-center justify-center shadow-md">
                 {role.charAt(0)}
               </div>
               <div className="overflow-hidden">
-                <p className="text-xs font-bold text-dark truncate">{role} User</p>
-                <p className="text-[10px] text-dark/60 font-medium truncate">demo_{role.toLowerCase()}</p>
+                <p className="text-xs font-bold text-white truncate">{role} User</p>
+                <p className="text-[10px] text-white/70 font-medium truncate">demo_{role.toLowerCase()}</p>
               </div>
             </div>
           )}
           <button 
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 rounded-xl transition-all"
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-red-200 hover:text-white hover:bg-red-500/50 rounded-xl transition-all"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />

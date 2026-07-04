@@ -1,8 +1,9 @@
 from app import create_app
-from models import db, Role, User, District, Hospital, Bed
+from models import db, Role, User, District, Hospital, Bed, Doctor, DoctorShift, ShiftQueue
 # pyrefly: ignore [missing-import, unexpected-keyword]
 # pyright: ignore[reportMissingImports, reportCallIssue]
 from werkzeug.security import generate_password_hash
+from datetime import date, datetime, timezone
 
 
 def seed_database():
@@ -71,6 +72,64 @@ def seed_database():
                 db.session.add(user)
         
         db.session.commit()
+
+        # ─── Seed Doctor Profile ─────────────────────────────────────────
+        print("Seeding doctor profile...")
+        doc_user = User.query.filter_by(username='doc_yusuf').first()
+        if doc_user and not Doctor.query.filter_by(user_id=doc_user.id).first():
+            doctor = Doctor(  #type:ignore
+                user_id=doc_user.id,
+                hospital_id=hospital.id,
+                department='General Medicine',
+                is_on_leave=False
+            )
+            db.session.add(doctor)
+            db.session.commit()
+            print(f"  Doctor profile created for {doc_user.username} (ID: {doctor.id})")
+
+        # ─── Seed Doctor Shifts ──────────────────────────────────────────
+        print("Seeding doctor shifts...")
+        doctor = Doctor.query.first()
+        if doctor and DoctorShift.query.filter_by(doctor_id=doctor.id, shift_date=date.today()).count() == 0:
+            shifts_data = [
+                {'start': '09:00', 'end': '10:00', 'max': 10},
+                {'start': '10:00', 'end': '12:00', 'max': 15},
+                {'start': '14:00', 'end': '17:00', 'max': 20},
+            ]
+            for s in shifts_data:
+                shift = DoctorShift(  #type:ignore
+                    doctor_id=doctor.id,
+                    shift_date=date.today(),
+                    start_time=s['start'],
+                    end_time=s['end'],
+                    max_appointments=s['max'],
+                    is_active=True
+                )
+                db.session.add(shift)
+            db.session.commit()
+            print(f"  Created {len(shifts_data)} shifts for today")
+
+            # Seed queue entries for first shift
+            first_shift = DoctorShift.query.filter_by(doctor_id=doctor.id, shift_date=date.today()).first()
+            if first_shift and ShiftQueue.query.filter_by(shift_id=first_shift.id).count() == 0:
+                queue_data = [
+                    {'name': 'Rohan Sen', 'token': 1, 'status': 'Completed'},
+                    {'name': 'Priya Sharma', 'token': 2, 'status': 'In_Consultation'},
+                    {'name': 'Anil Kumar', 'token': 3, 'status': 'Waiting'},
+                    {'name': 'Neha Patel', 'token': 4, 'status': 'Waiting'},
+                    {'name': 'Suresh Gupta', 'token': 5, 'status': 'Waiting'},
+                ]
+                for q in queue_data:
+                    entry = ShiftQueue(  #type:ignore
+                        shift_id=first_shift.id,
+                        patient_name=q['name'],
+                        token_number=q['token'],
+                        status=q['status']
+                    )
+                    db.session.add(entry)
+                db.session.commit()
+                print(f"  Created {len(queue_data)} queue entries for first shift")
+
         print("Database seeding completed successfully!")
 
 if __name__ == '__main__':

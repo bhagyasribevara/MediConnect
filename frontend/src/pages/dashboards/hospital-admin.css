@@ -1,0 +1,264 @@
+/* hospital-admin.css - Premium Claymorphism Design System */
+
+:root {
+  --ha-bg: #F4F7FA;
+  --ha-white: #FFFFFF;
+  --ha-primary: #14C8B4;
+  --ha-accent: #00D4C6;
+  --ha-success: #10B981;
+  --ha-warning: #F59E0B;
+  --ha-danger: #EF4444;
+  --ha-text-main: #1F2937;
+  --ha-text-muted: #6B7280;
+  
+  --ha-shadow-outer: 10px 10px 20px rgba(0, 0, 0, 0.05), -10px -10px 20px rgba(255, 255, 255, 0.8);
+  --ha-shadow-inner: inset 4px 4px 10px rgba(0, 0, 0, 0.03), inset -4px -4px 10px rgba(255, 255, 255, 0.9);
+  --ha-shadow-hover: 12px 12px 24px rgba(0, 0, 0, 0.08), -12px -12px 24px rgba(255, 255, 255, 1);
+}
+
+.ha-dashboard-container {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--ha-bg);
+  color: var(--ha-text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ha-top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--ha-white);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  z-index: 10;
+}
+
+.ha-main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.ha-sidebar {
+  width: 280px;
+  background: var(--ha-primary);
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+}
+
+.ha-content-area {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Claymorphism Cards */
+.ha-clay-card {
+  background: var(--ha-white);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.ha-clay-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.ha-clay-card.primary-gradient {
+  background: linear-gradient(135deg, var(--ha-primary), var(--ha-accent));
+  color: white;
+  box-shadow: 0 10px 30px rgba(20, 200, 180, 0.3);
+}
+.ha-clay-card.primary-gradient .ha-text-muted {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Buttons */
+.ha-btn {
+  background: var(--ha-white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 600;
+  color: var(--ha-primary);
+  box-shadow: var(--ha-shadow-outer);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ha-btn:hover {
+  box-shadow: var(--ha-shadow-hover);
+}
+
+.ha-btn:active {
+  box-shadow: var(--ha-shadow-inner);
+}
+
+.ha-btn-primary {
+  background: var(--ha-primary);
+  color: white;
+  box-shadow: 0 4px 15px rgba(20, 200, 180, 0.3);
+}
+
+.ha-btn-primary:hover {
+  background: var(--ha-accent);
+  box-shadow: 0 6px 20px rgba(20, 200, 180, 0.4);
+}
+
+/* Typography */
+.ha-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.ha-subtitle {
+  font-size: 0.875rem;
+  color: var(--ha-text-muted);
+}
+
+/* Grids */
+.ha-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+.ha-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.ha-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.ha-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+/* Tables */
+.ha-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+.ha-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ha-table th, .ha-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.ha-table th {
+  color: var(--ha-text-muted);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Badges */
+.ha-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.ha-badge.success { background: rgba(16, 185, 129, 0.1); color: var(--ha-success); }
+.ha-badge.warning { background: rgba(245, 158, 11, 0.1); color: var(--ha-warning); }
+.ha-badge.danger { background: rgba(239, 68, 68, 0.1); color: var(--ha-danger); }
+
+/* Sidebar Nav Items */
+.ha-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+.ha-nav-item:hover, .ha-nav-item.active {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--ha-white);
+  box-shadow: none;
+}
+.ha-nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* AI Copilot Button */
+.ha-ai-copilot-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #14C8B4, #00D4C6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(20, 200, 180, 0.4);
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.3s ease;
+  animation: pulse-glow 2s infinite;
+}
+.ha-ai-copilot-btn:hover {
+  transform: scale(1.1);
+}
+.ha-ai-copilot-btn svg {
+  width: 32px;
+  height: 32px;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(20, 200, 180, 0.4); }
+  70% { box-shadow: 0 0 0 15px rgba(20, 200, 180, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 200, 180, 0); }
+}
+
+/* Layer Section Styles */
+.ha-layer-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ha-text-main);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ha-layer-section {
+  background: rgba(255, 255, 255, 0.3);
+  padding: 1.5rem;
+  border-radius: 32px;
+  backdrop-filter: blur(10px);
+}
