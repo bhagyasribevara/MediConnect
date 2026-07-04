@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
@@ -89,7 +89,7 @@ const ClayCard = ({ children, className = '', hover = true }: { children: React.
 
 // ─── Main Component ────────────────────────────────────────────────────
 export default function DoctorDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<string>('overview');
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
@@ -381,6 +381,8 @@ export default function DoctorDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
             {/* ─── KPI Cards Row ─────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
               {/* Appointments Today */}
