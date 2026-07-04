@@ -24,10 +24,10 @@ def create_request(current_user):
         return jsonify({'error': 'No hospitals found'}), 404
         
     new_request = InventoryRequest(
-        medicine_name=medicine_name,
-        requested_quantity=requested_quantity,
-        requesting_hospital_id=hospital.id,
-        status='Pending'
+        medicine_name=medicine_name,  # type: ignore
+        requested_quantity=requested_quantity,  # type: ignore
+        requesting_hospital_id=hospital.id,  # type: ignore
+        status='Pending'  # type: ignore
     )
     db.session.add(new_request)
     db.session.commit()
@@ -84,9 +84,9 @@ def approve_request(current_user, request_id):
         medicine.quantity += inv_req.requested_quantity
     else:
         new_med = Medicine(
-            name=inv_req.medicine_name,
-            quantity=inv_req.requested_quantity,
-            hospital_id=inv_req.requesting_hospital_id
+            name=inv_req.medicine_name,  # type: ignore
+            quantity=inv_req.requested_quantity,  # type: ignore
+            hospital_id=inv_req.requesting_hospital_id  # type: ignore
         )
         db.session.add(new_med)
         
@@ -122,9 +122,29 @@ def manage_bloodbank(current_user):
         if blood:
             blood.units += data.get('units', 0)
         else:
-            blood = BloodBank(blood_group=data['group'], units=data.get('units', 0), hospital_id=hospital.id)
+            blood = BloodBank(blood_group=data['group'], units=data.get('units', 0), hospital_id=hospital.id)  # type: ignore
             db.session.add(blood)
         db.session.commit()
         
         socketio.emit('blood_stock_updated', {'group': blood.blood_group, 'units': blood.units}, namespace='/')
         return jsonify({'message': 'Blood stock updated'}), 200
+
+@inventory_bp.route('/medicines', methods=['GET'])
+@token_required
+def get_medicines(current_user):
+    """Hospital Admin views medicines"""
+    if current_user.role.name != 'HospitalAdmin':
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    medicines = Medicine.query.all()
+    output = []
+    for m in medicines:
+        output.append({
+            'id': m.id,
+            'name': m.name,
+            'quantity': m.quantity,
+            'batch_number': m.batch_number,
+            'expiry_date': m.expiry_date.strftime('%Y-%m-%d') if m.expiry_date else None,
+            'hospital': m.hospital.name if m.hospital else 'Unknown'
+        })
+    return jsonify(output), 200

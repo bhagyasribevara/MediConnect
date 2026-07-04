@@ -12,6 +12,7 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=True, unique=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
     phone_number = db.Column(db.String(15))
@@ -57,9 +58,11 @@ class Doctor(db.Model):
     hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=False)
     department = db.Column(db.String(100), nullable=False)
     is_on_leave = db.Column(db.Boolean, default=False)
+    profile_photo = db.Column(db.String(255), nullable=True)
     
     user = db.relationship('User', backref=db.backref('doctor_profile', uselist=False))
     hospital = db.relationship('Hospital', backref='doctors')
+
 
 class Bed(db.Model):
     __tablename__ = 'beds'
@@ -113,6 +116,7 @@ class PatientRecord(db.Model):
     
     patient = db.relationship('Patient', backref='records')
 
+<<<<<<< HEAD
 class DoctorAvailability(db.Model):
     __tablename__ = 'doctor_availability'
     id = db.Column(db.Integer, primary_key=True)
@@ -173,3 +177,53 @@ class Queue(db.Model):
     current_status = db.Column(db.Enum('Waiting', 'In Progress', 'Completed', 'Skipped', 'Cancelled'), default='Waiting')
     
     appointment = db.relationship('Appointment', backref=db.backref('queue_entry', uselist=False))
+=======
+class DoctorShift(db.Model):
+    __tablename__ = 'doctor_shifts'
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
+    shift_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.String(10), nullable=False)  # "09:00"
+    end_time = db.Column(db.String(10), nullable=False)    # "10:00"
+    max_appointments = db.Column(db.Integer, default=10)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    doctor = db.relationship('Doctor', backref='shifts')
+
+class ShiftQueue(db.Model):
+    __tablename__ = 'shift_queue'
+    id = db.Column(db.Integer, primary_key=True)
+    shift_id = db.Column(db.Integer, db.ForeignKey('doctor_shifts.id'), nullable=False)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=True)
+    patient_name = db.Column(db.String(100), nullable=False)
+    token_number = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), default='Waiting')  # Waiting, In_Consultation, Completed, Cancelled
+    booked_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    shift = db.relationship('DoctorShift', backref='queue_entries')
+
+class LeaveRequest(db.Model):
+    __tablename__ = 'leave_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
+    leave_date = db.Column(db.Date, nullable=False)
+    reason = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(20), default='Pending')  # Pending, Approved, Rejected
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    
+    doctor = db.relationship('Doctor', backref='leave_requests')
+
+class DoctorAttendance(db.Model):
+    __tablename__ = 'doctor_attendance'
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctors.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    punch_in = db.Column(db.DateTime, nullable=True)
+    punch_out = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), default='Absent')  # Present, Absent, On_Leave, Half_Day
+    
+    doctor = db.relationship('Doctor', backref='attendance_records')
+
+>>>>>>> db6ce3f5d93f35bf28d43cd306971e624434d556

@@ -1,3 +1,5 @@
+# pyrefly: ignore [unexpected-keyword]
+# pyright: reportCallIssue=false
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -30,10 +32,14 @@ def register():
         return jsonify({'message': 'Invalid role'}), 400
 
     hashed_password = generate_password_hash(password)
-    new_user = User(
+    new_user = User(  # type: ignore
+        # pyrefly: ignore [unexpected-keyword]
         username=username,
+        # pyrefly: ignore [unexpected-keyword]
         password_hash=hashed_password,
+        # pyrefly: ignore [unexpected-keyword]
         role_id=role.id,
+        # pyrefly: ignore [unexpected-keyword]
         phone_number=phone_number
     )
     

@@ -1,3 +1,5 @@
+# pyrefly: ignore [missing-import, unexpected-keyword]
+# pyright: ignore[reportMissingImports, reportCallIssue]
 from flask import Blueprint, request, jsonify
 from models import db, Patient, PatientRecord, User
 from dashboard import token_required
@@ -36,10 +38,15 @@ def manage_records(current_user):
         target_patient_id = data.get('patient_id', patient.id if patient else None)
         
         new_record = PatientRecord(
+            # pyrefly: ignore [unexpected-keyword]
             patient_id=target_patient_id,
+            # pyrefly: ignore [unexpected-keyword]
             record_type=data.get('type', 'Report'),
+            # pyrefly: ignore [unexpected-keyword]
             file_url=data.get('url'),
+            # type: ignore
             ai_summary=data.get('summary'),
+            # type: ignore
             ai_abnormal_values=data.get('abnormal_values')
         )
         db.session.add(new_record)

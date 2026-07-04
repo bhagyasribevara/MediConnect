@@ -77,7 +77,7 @@ export default function DistrictAdminDashboard() {
 
   // Sync real-time socket events
   useEffect(() => {
-    const socket = io('http://127.0.0.1:5000');
+    const socket = io('http://127.0.0.1:5000', { transports: ['polling'] });
     socket.on('new_inventory_request', (data) => {
       queryClient.invalidateQueries({ queryKey: ['pendingRequests'] });
       setRedistributions(prev => [
