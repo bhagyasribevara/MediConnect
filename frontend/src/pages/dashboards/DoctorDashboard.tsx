@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
+import { io } from 'socket.io-client';
+
+const socket = io('http://127.0.0.1:5000');
 
 // ─── Icon Components ────────────────────────────────────────────────────
 const DashboardIcon = () => (
@@ -90,6 +93,33 @@ export default function DoctorDashboard() {
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
 
+  const queryClient = useQueryClient();
+  const doctor_id = 1; // Prototype value
+
+  // Queue fetching
+  const { data: queue = [], isLoading: isLoadingQueue } = useQuery({
+    queryKey: ['doctorQueue', doctor_id],
+    queryFn: async () => {
+      const res = await api.get(`/appointment/queue?doctor_id=${doctor_id}`);
+      return res.data;
+    }
+  });
+
+  useEffect(() => {
+    socket.on('queue_updated', (data) => {
+      if (data.doctor_id == doctor_id) {
+        queryClient.invalidateQueries({ queryKey: ['doctorQueue', doctor_id] });
+      }
+    });
+    return () => {
+      socket.off('queue_updated');
+    };
+  }, [queryClient, doctor_id]);
+
+  const updateQueueStatus = async (queue_id: number, status: string) => {
+    await api.post('/appointment/queue/status', { queue_id, status });
+  };
+
   // Consultation state
   const [consultationForm, setConsultationForm] = useState({
     diagnosis: '',
@@ -107,7 +137,6 @@ export default function DoctorDashboard() {
     { id: 102, patientName: 'Priya Sharma', reportType: 'Lipid Panel', uploadDate: '2026-07-01', ocrText: 'Cholesterol Total: 240 mg/dL (Elevated), LDL: 160 mg/dL (High)', summary: 'Total and LDL cholesterol are high, indicating risk of cardiovascular strain.', abnormal: ['Total Cholesterol: 240 mg/dL (Elevated)', 'LDL Cholesterol: 160 mg/dL (High)'], recommendations: ['Prescribe low-fat Mediterranean diet.', 'Begin low-dose Statin therapy.'] }
   ]);
 
-  const queryClient = useQueryClient();
   const [leaveForm, setLeaveForm] = useState({ date: '', reason: '' });
   const [shiftForm, setShiftForm] = useState({ start: '09:00', end: '10:00', max: 10 });
 
@@ -291,6 +320,67 @@ export default function DoctorDashboard() {
               </div>
             </div>
 
+            {/* Today's Appointments queue */}
+            <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-4">
+              <h3 className="text-sm font-bold text-dark">Active Consultation Queue</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-accent/15 text-secondary/70 text-xs">
+                      <th className="py-2.5 px-4 font-semibold">Token</th>
+                      <th className="py-2.5 px-4 font-semibold">Patient Name</th>
+                      <th className="py-2.5 px-4 font-semibold">Time</th>
+                      <th className="py-2.5 px-4 font-semibold">Status</th>
+                      <th className="py-2.5 px-4 font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-xs text-dark">
+                    {isLoadingQueue ? (
+                      <tr><td colSpan={5} className="py-4 text-center">Loading queue...</td></tr>
+                    ) : queue.length === 0 ? (
+                      <tr><td colSpan={5} className="py-4 text-center">No patients in queue today.</td></tr>
+                    ) : (
+                      queue.map((appt: any) => (
+                        <tr key={appt.appointment_id} className="border-b border-accent/15 hover:bg-accent/10">
+                          <td className="py-2.5 px-4 font-bold text-secondary">{appt.queue_number}</td>
+                          <td className="py-2.5 px-4 font-bold">{appt.patient_name}</td>
+                          <td className="py-2.5 px-4">{appt.time}</td>
+                          <td className="py-2.5 px-4">
+                            <span className={`px-2 py-1 rounded font-bold text-[10px] ${appt.status === 'Waiting' ? 'bg-yellow-100 text-yellow-700' : appt.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                              {appt.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-4 flex gap-2">
+                            {appt.status === 'Waiting' && (
+                              <button 
+                                onClick={() => updateQueueStatus(appt.queue_id, 'In Progress')}
+                                className="px-3 py-1 bg-secondary text-white rounded-lg font-bold shadow hover:bg-[#00a892] transition-colors"
+                              >
+                                Start
+                              </button>
+                            )}
+                            {appt.status === 'In Progress' && (
+                              <button 
+                                onClick={() => updateQueueStatus(appt.queue_id, 'Completed')}
+                                className="px-3 py-1 bg-green-500 text-white rounded-lg font-bold shadow hover:bg-green-600 transition-colors"
+                              >
+                                Finish
+                              </button>
+                            )}
+                            {(appt.status === 'Waiting' || appt.status === 'In Progress') && (
+                              <button 
+                                onClick={() => updateQueueStatus(appt.queue_id, 'Skipped')}
+                                className="px-3 py-1 bg-red-500 text-white rounded-lg font-bold shadow hover:bg-red-600 transition-colors"
+                              >
+                                Skip
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
             {/* ─── KPI Cards Row ─────────────────────────────────────────────── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
               {/* Appointments Today */}
