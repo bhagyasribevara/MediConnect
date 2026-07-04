@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
+import { getModelStatus, retrainModel, retrainAllModels } from '../../services/ai_api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Icons as inline SVGs
@@ -86,6 +87,34 @@ export default function SuperAdminDashboard() {
       return res.data.metrics;
     }
   });
+
+  // Fetch AI Model Status
+  const { data: mlModels, refetch: refetchModels } = useQuery({
+    queryKey: ['ml_model_status'],
+    queryFn: async () => {
+      const res = await getModelStatus();
+      return res.data;
+    },
+    enabled: activeTab === 'ai_models'
+  });
+
+  const handleRetrain = async (modelName: string) => {
+    try {
+      await retrainModel(modelName);
+      alert(`Retraining started for model: ${modelName}. This will run in the background.`);
+    } catch (err) {
+      alert(`Error starting retraining for ${modelName}`);
+    }
+  };
+
+  const handleRetrainAll = async () => {
+    try {
+      await retrainAllModels();
+      alert('Retraining started for all models in the background.');
+    } catch (err) {
+      alert('Error starting batch retraining.');
+    }
+  };
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,40 +262,98 @@ export default function SuperAdminDashboard() {
             </div>
           )}
 
-          {/* TAB 3: AI LLM MODELS */}
+          {/* TAB 3: AI ML MODELS & API */}
           {activeTab === 'ai_models' && (
-            <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
-              <h3 className="text-sm font-bold text-dark">Active Gemini API Deployments</h3>
+            <div className="space-y-6">
+              
+              {/* ML Pipeline Models (Joblib/Scikit-learn/XGBoost) */}
+              <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-bold text-dark flex items-center gap-2">
+                    <ModelsIcon /> Predictive ML Pipeline Models
+                  </h3>
+                  <button onClick={handleRetrainAll} className="px-3 py-1.5 bg-secondary text-white text-xs font-bold rounded-xl shadow hover:bg-[#00a892]">
+                    Retrain All Models
+                  </button>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {aiModels.map((model) => (
-                  <div key={model.id} className="p-5 border border-accent/25 rounded-2xl bg-accent/20 flex flex-col justify-between space-y-4">
-                    <div>
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-xs text-dark">{model.name}</h4>
-                        <span className={`px-2 py-0.5 rounded font-bold text-[9px] uppercase ${model.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-650'}`}>{model.status}</span>
-                      </div>
-                      <div className="mt-4 text-xs space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-secondary/75">Response Latency</span>
-                          <span className="font-bold">{model.latency}</span>
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {mlModels?.models?.map((model: any) => (
+                    <div key={model.name} className="p-5 border border-accent/25 rounded-2xl bg-white shadow-sm flex flex-col justify-between space-y-4">
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-bold text-sm text-dark capitalize">{model.name} Model</h4>
+                          <span className={`px-2 py-0.5 rounded font-bold text-[9px] uppercase ${model.status === 'loaded' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {model.status}
+                          </span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-secondary/75">Token Limit quota</span>
-                          <span className="font-bold">{model.tokens}</span>
+                        <p className="text-[10px] text-gray-500 mt-1">{model.purpose || 'ML Prediction Model'}</p>
+                        
+                        <div className="mt-4 text-xs space-y-2 bg-accent/10 p-3 rounded-xl border border-accent/20">
+                          <div className="flex justify-between">
+                            <span className="text-secondary/60 font-bold">Accuracy / Score</span>
+                            <span className="text-dark font-medium">{model.accuracy ? (model.accuracy * 100).toFixed(1) + '%' : 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-secondary/60 font-bold">Algorithm</span>
+                            <span className="text-dark font-medium">{model.model_type}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-secondary/60 font-bold">Dataset Rows</span>
+                            <span className="text-dark font-medium">{model.dataset_rows ? model.dataset_rows.toLocaleString() : 0}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-secondary/60 font-bold">Size</span>
+                            <span className="text-dark font-medium">{model.file_size_mb} MB</span>
+                          </div>
                         </div>
                       </div>
+                      
+                      <button onClick={() => handleRetrain(model.name)} className="w-full py-2 bg-accent/20 hover:bg-accent/40 text-secondary font-bold text-[10px] uppercase rounded-xl transition-colors">
+                        Initiate Retraining
+                      </button>
                     </div>
-
-                    <button 
-                      onClick={() => toggleModel(model.id)}
-                      className={`w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${model.status === 'Active' ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-secondary text-white hover:bg-[#00a892]'}`}
-                    >
-                      {model.status === 'Active' ? 'Disable Model' : 'Enable Model'}
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                  
+                  {!mlModels?.models && (
+                    <div className="col-span-full py-8 text-center text-sm text-gray-500">
+                      Loading ML Model Status...
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Gemini LLM API Status (Existing) */}
+              <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
+                <h3 className="text-sm font-bold text-dark">Active Generative AI (LLM) Deployments</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {aiModels.map((model) => (
+                    <div key={model.id} className="p-5 border border-accent/25 rounded-2xl bg-accent/20 flex flex-col justify-between space-y-4">
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-bold text-xs text-dark">{model.name}</h4>
+                          <span className={`px-2 py-0.5 rounded font-bold text-[9px] uppercase ${model.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-650'}`}>{model.status}</span>
+                        </div>
+                        <div className="mt-4 text-xs space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-secondary/60 font-bold">API Latency</span>
+                            <span className="text-dark font-medium">{model.latency}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-secondary/60 font-bold">Tokens Used</span>
+                            <span className="text-dark font-medium">{model.tokens}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button className="w-full py-2 bg-white text-secondary font-bold text-[10px] uppercase rounded-xl border border-accent/30 hover:bg-secondary hover:text-white transition-all shadow-sm">
+                        View Analytics
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
             </div>
           )}
 

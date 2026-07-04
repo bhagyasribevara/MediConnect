@@ -1,0 +1,10 @@
+organisation,Ministry of Panchayati Raj
+sectors,"Administration and Governance"
+updated_frequency,As and When
+granularity,"State, District, Sub District, Village"
+time_saved,2 hours
+source,"Local Government Directory"
+source_link,"https://lgdirectory.gov.in/downloadDirectory.do?OWASP_CSRFTOKEN=AQH4-9B6A-WW99-FH4X-53SQ-3AB5-7OYS-9D2H"
+time_period,"2026"
+units,"Not Applicable"
+citation,"Ministry of Panchayati Raj. List of States, Districts, Sub-Districts, and Villages along with their LGD Codes (as of 2 July 2026) [Data set]. Dataful. https://dataful.in/datasets/21838"

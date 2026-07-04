@@ -2,6 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
 import api from '../../services/api';
+import { 
+  getAppointmentLoad, 
+  predictBedOccupancy, 
+  getLowStock, 
+  getExpiryRisk,
+  predictHospitalLoad
+} from '../../services/ai_api';
 import './hospital-admin.css'; // Premium Claymorphism UI
 
 // --- ICONS (Inline SVGs for performance & stability) ---
@@ -51,6 +58,25 @@ export default function HospitalAdminDashboard() {
   const { data: labReports } = useQuery({ queryKey: ['ha_lab'], queryFn: async () => (await api.get('/dashboard/hospitaladmin/lab')).data, enabled: activeTab === 'lab' });
   const { data: bloodBank } = useQuery({ queryKey: ['ha_blood'], queryFn: async () => (await api.get('/inventory/bloodbank')).data, enabled: activeTab === 'blood' });
 
+  // ─── AI Predictive Data ───────────────────────────────────────
+  const { data: aiBedForecast } = useQuery({
+    queryKey: ['ai_bed_forecast'],
+    queryFn: async () => (await predictBedOccupancy({ total_beds: 300, current_occupied: 245 })).data,
+    enabled: activeTab === 'beds' || activeTab === 'ai_insights'
+  });
+
+  const { data: aiMedicineAlerts } = useQuery({
+    queryKey: ['ai_medicine_alerts'],
+    queryFn: async () => (await getLowStock()).data,
+    enabled: activeTab === 'pharmacy' || activeTab === 'ai_insights'
+  });
+
+  const { data: aiHospitalLoad } = useQuery({
+    queryKey: ['ai_hospital_load'],
+    queryFn: async () => (await predictHospitalLoad({ State: 'Maharashtra', District: 'Mumbai', Total_Num_Beds: 300, Number_Doctor: 50 })).data,
+    enabled: activeTab === 'overview' || activeTab === 'ai_insights'
+  });
+
   // Mutations for New Modules
   const updateBedMutation = useMutation({
     mutationFn: ({ id, status }: { id: number, status: string }) => api.put(`/dashboard/hospitaladmin/beds/${id}`, { status }),
@@ -92,6 +118,7 @@ export default function HospitalAdminDashboard() {
     { id: 'lab', label: 'Laboratory', icon: <IconLab /> },
     { id: 'blood', label: 'Blood Bank', icon: <IconBlood /> },
     { id: 'emergency', label: 'Emergency Cases', icon: <IconEmergency /> },
+    { id: 'ai_insights', label: 'AI Insights & Forecasts', icon: <IconCopilot /> },
     { id: 'analytics', label: 'Reports & Analytics', icon: <IconAnalytics /> },
   ];
   return (
@@ -810,6 +837,102 @@ export default function HospitalAdminDashboard() {
         <div className="ha-ai-copilot-btn" title="MediConnect AI Copilot">
           <IconCopilot />
         </div>
+        {/* ═══════════════════════ TAB: AI INSIGHTS ═══════════════════════ */}
+        {activeTab === 'ai_insights' && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-500/30">
+                🤖
+              </div>
+              <div>
+                <h3 className="text-2xl font-extrabold text-gray-900">AI Clinical & Operational Insights</h3>
+                <p className="text-sm text-gray-500 font-medium mt-1">Predictive analytics powered by MediConnect 360 AI Models</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Bed Occupancy Forecast */}
+              <div className="ha-clay-card flex flex-col h-full">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                      🛏️ Predictive Bed Occupancy
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-1">AI forecast based on admission trends</p>
+                  </div>
+                  <div className={`px-3 py-1 rounded-xl text-xs font-bold ${aiBedForecast?.alert_level === 'CRITICAL' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                    {aiBedForecast?.alert_level} RISK
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                    <p className="text-xs text-gray-500 font-bold">Current Rate</p>
+                    <p className="text-2xl font-black text-gray-900 mt-1">{aiBedForecast?.current_occupancy_rate || 0}%</p>
+                  </div>
+                  <div className="bg-indigo-50 rounded-2xl p-4 border border-indigo-100">
+                    <p className="text-xs text-indigo-600 font-bold">Predicted (48h)</p>
+                    <p className="text-2xl font-black text-indigo-700 mt-1">{aiBedForecast?.predicted_occupancy_rate || 0}%</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h5 className="text-sm font-bold text-gray-700">Projected Availability</h5>
+                  {aiBedForecast?.bed_breakdown && Object.entries(aiBedForecast.bed_breakdown).map(([type, data]: [string, any]) => (
+                    <div key={type} className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                      <span className="text-sm font-bold capitalize text-gray-700">{type} Beds</span>
+                      <div className="text-right">
+                        <span className="text-lg font-black text-gray-900">{data.available}</span>
+                        <span className="text-xs text-gray-400 ml-1">/ {data.total}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Medicine & Stock Alerts */}
+              <div className="ha-clay-card flex flex-col h-full">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                      💊 Smart Inventory Forecasting
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-1">AI-driven low stock & demand alerts</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-xs">
+                    {aiMedicineAlerts?.total_alerts || 0}
+                  </div>
+                </div>
+
+                <div className="space-y-3 flex-grow overflow-y-auto pr-2">
+                  {aiMedicineAlerts?.alerts?.map((alert: any, idx: number) => (
+                    <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden group hover:border-amber-200 transition-colors">
+                      <div className={`absolute left-0 top-0 bottom-0 w-1 ${alert.risk_level === 'CRITICAL' ? 'bg-red-500' : 'bg-amber-500'}`}></div>
+                      <div className="flex justify-between items-start pl-2">
+                        <div>
+                          <h5 className="font-bold text-gray-900">{alert.medicine}</h5>
+                          <p className="text-xs text-gray-500 mt-1">Stockout in <span className="font-bold text-gray-700">{alert.days_until_stockout} days</span></p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase">Suggested Reorder</p>
+                          <p className="text-lg font-black text-indigo-600">{alert.suggested_reorder} units</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!aiMedicineAlerts?.alerts || aiMedicineAlerts.alerts.length === 0) && (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      No critical stock alerts at this time.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
 
         {/* Add Doctor Modal */}
         {isAddDoctorModalOpen && (

@@ -43,6 +43,9 @@ def chat(current_user):
     system_prompt = get_system_prompt_for_role(role)
 
     try:
+        if gemini_api_key == "AQ.Ab8RN6K_FDaeu70zKv9CHr5A3g1pXkYRMBKKu1N3Kr1uLZnNsg":
+            raise Exception("Known invalid dummy Gemini API key. Skipping remote call for instant offline response.")
+            
         response = client.models.generate_content(
             model='gemini-1.5-flash',
             contents=message,
@@ -59,4 +62,19 @@ def chat(current_user):
 
     except Exception as e:
         print(f"AI Error: {e}")
-        return jsonify({'error': 'Failed to process AI request. Please try again later.'}), 500
+        # Fallback if API key is invalid or network fails
+        fallback_reply = "I'm currently operating in offline fallback mode because my AI API key is missing or invalid. Based on your input, please consult a medical professional for a proper diagnosis."
+        
+        # Try to extract the ML prediction from the prompt if it's there
+        if "ML Model suspects:" in message:
+            try:
+                suspect_part = message.split("ML Model suspects:")[1].split(" Provide")[0].strip()
+                fallback_reply = f"I'm currently in offline fallback mode, but my local ML analysis suspects: {suspect_part}. Please consult a doctor."
+            except:
+                pass
+                
+        return jsonify({
+            'reply': fallback_reply,
+            'role_context': role,
+            'is_fallback': True
+        }), 200

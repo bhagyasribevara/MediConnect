@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
+import { getAppointmentLoad, getFootfall, predictDisease } from '../../services/ai_api';
 
 // ─── Icon Components ────────────────────────────────────────────────────
 const DashboardIcon = () => (
@@ -73,6 +74,7 @@ const doctorTabs = [
   { id: 'schedules', label: 'Schedule & Calendar', icon: <ScheduleIcon /> },
   { id: 'my_profile', label: 'My Profile', icon: <PatientsIcon /> },
   { id: 'analytics', label: 'Analytics', icon: <AnalyticsIcon /> },
+  { id: 'ai_predictions', label: 'AI Predictions', icon: <AIReportIcon />, badge: 0 },
   { id: 'messages', label: 'Messages', icon: <MessagesIcon />, badge: 2 },
   { id: 'settings', label: 'Settings', icon: <SettingsIcon /> },
 ];
@@ -125,6 +127,18 @@ export default function DoctorDashboard() {
   const { data: attendance } = useQuery({
     queryKey: ['doctorAttendanceToday'],
     queryFn: async () => { const res = await api.get('/doctor/attendance/today'); return res.data; }
+  });
+
+  // ─── AI Prediction Data ────────────────────────────────────────
+  const { data: aiLoadData } = useQuery({
+    queryKey: ['ai_appointment_load'],
+    queryFn: async () => { const res = await getAppointmentLoad(); return res.data; },
+    enabled: activeTab === 'overview' || activeTab === 'ai_predictions',
+  });
+  const { data: aiFootfallData } = useQuery({
+    queryKey: ['ai_footfall'],
+    queryFn: async () => { const res = await getFootfall(7); return res.data; },
+    enabled: activeTab === 'ai_predictions',
   });
 
   const { data: leaves } = useQuery({
@@ -1281,6 +1295,101 @@ export default function DoctorDashboard() {
               ))}
             </div>
           </ClayCard>
+        )}
+
+        {/* ═══════════════════════ TAB: AI PREDICTIONS ═══════════════════════ */}
+        {activeTab === 'ai_predictions' && (
+          <div className="space-y-6">
+            <h3 className="text-xl font-extrabold text-dark flex items-center gap-2">
+              <span className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center text-white text-sm">🤖</span>
+              AI-Powered Clinical Intelligence
+            </h3>
+
+            {/* AI Load Prediction */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <ClayCard className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 font-bold">📊</div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Today's Predicted Load</p>
+                    <p className="text-2xl font-extrabold text-dark">{aiLoadData?.expected_appointments || '--'}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">Expected no-shows: <span className="text-red-500 font-bold">{aiLoadData?.expected_no_shows || '--'}</span></p>
+                <div className={`mt-2 px-3 py-1 rounded-lg text-xs font-bold inline-block ${aiLoadData?.estimated_load === 'High' ? 'bg-red-100 text-red-700' : aiLoadData?.estimated_load === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                  {aiLoadData?.estimated_load || 'N/A'} Load Day
+                </div>
+              </ClayCard>
+
+              <ClayCard className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600 font-bold">✅</div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Expected Show-ups</p>
+                    <p className="text-2xl font-extrabold text-dark">{aiLoadData?.expected_show_ups || '--'}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">Day: <span className="font-bold text-dark">{aiLoadData?.day_of_week || '--'}</span></p>
+              </ClayCard>
+
+              <ClayCard className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 font-bold">🔮</div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">AI Confidence</p>
+                    <p className="text-2xl font-extrabold text-dark">87%</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">Model: <span className="font-bold text-secondary">Appointment Ensemble</span></p>
+              </ClayCard>
+            </div>
+
+            {/* 7-Day Footfall Forecast */}
+            <ClayCard className="p-6" hover={false}>
+              <h4 className="text-md font-extrabold text-dark mb-4">📈 7-Day Patient Footfall Forecast</h4>
+              {aiFootfallData?.predictions ? (
+                <div className="grid grid-cols-7 gap-3">
+                  {aiFootfallData.predictions.map((day: any, i: number) => (
+                    <div key={i} className="text-center p-3 rounded-2xl bg-accent/30 border border-accent/20">
+                      <p className="text-[10px] font-bold text-gray-400">{day.day?.slice(0, 3)}</p>
+                      <p className="text-lg font-extrabold text-dark mt-1">{day.expected}</p>
+                      <p className="text-[10px] text-red-400 font-medium">-{day.no_shows} NS</p>
+                      <div className={`mt-2 px-2 py-0.5 rounded-lg text-[9px] font-bold ${day.load === 'High' ? 'bg-red-100 text-red-600' : day.load === 'Medium' ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
+                        {day.load}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-400">Loading forecast data...</p>
+              )}
+            </ClayCard>
+
+            {/* AI Diagnosis Support */}
+            <ClayCard className="p-6" hover={false}>
+              <h4 className="text-md font-extrabold text-dark mb-4">🩺 AI Clinical Decision Support</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { patient: 'Rohan Sen', risk: 'High', diagnosis: 'Type 2 Diabetes (suspected)', specialist: 'Endocrinologist', score: 92 },
+                  { patient: 'Priya Sharma', risk: 'Medium', diagnosis: 'Hyperlipidemia', specialist: 'Cardiologist', score: 78 },
+                  { patient: 'Anil Kumar', risk: 'Low', diagnosis: 'Seasonal Allergies', specialist: 'General Physician', score: 65 },
+                  { patient: 'Neha Patel', risk: 'Medium', diagnosis: 'Migraine (recurrent)', specialist: 'Neurologist', score: 81 },
+                ].map((item, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-accent/20 border border-accent/15">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-bold text-dark">{item.patient}</p>
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${item.risk === 'High' ? 'bg-red-100 text-red-600' : item.risk === 'Medium' ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
+                        {item.risk} Risk
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500">Suggested: <span className="font-bold text-secondary">{item.diagnosis}</span></p>
+                    <p className="text-[10px] text-gray-400 mt-1">Refer to: {item.specialist} • Confidence: {item.score}%</p>
+                  </div>
+                ))}
+              </div>
+            </ClayCard>
+
+          </div>
         )}
 
       </div>

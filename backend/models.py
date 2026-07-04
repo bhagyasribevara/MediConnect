@@ -164,3 +164,63 @@ class DoctorAttendance(db.Model):
     
     doctor = db.relationship('Doctor', backref='attendance_records')
 
+
+# ═══════════════════════════════════════════════════════════════════════════
+# AI/ML Models — Prediction Logs, Model Metadata, Training Logs, AI Alerts
+# ═══════════════════════════════════════════════════════════════════════════
+
+class PredictionLog(db.Model):
+    """Stores every AI prediction for audit and analytics."""
+    __tablename__ = 'prediction_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(100), nullable=False)  # appointment, symptom, etc.
+    input_summary = db.Column(db.Text)  # JSON summary of input
+    prediction = db.Column(db.String(255))  # Prediction result
+    confidence = db.Column(db.Float, default=0.0)
+    dashboard = db.Column(db.String(100))  # Which dashboard requested it
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class ModelMetadata(db.Model):
+    """Tracks model versions, accuracy, and health."""
+    __tablename__ = 'model_metadata'
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(100), nullable=False, unique=True)
+    model_type = db.Column(db.String(100))  # RandomForest, XGBoost, etc.
+    accuracy = db.Column(db.Float, default=0.0)
+    precision_score = db.Column(db.Float, default=0.0)
+    recall_score = db.Column(db.Float, default=0.0)
+    f1_score = db.Column(db.Float, default=0.0)
+    dataset_rows = db.Column(db.Integer, default=0)
+    training_duration = db.Column(db.Float, default=0.0)  # seconds
+    version = db.Column(db.Integer, default=1)
+    file_path = db.Column(db.String(255))
+    last_trained_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    status = db.Column(db.String(50), default='active')  # active, retraining, error
+
+class TrainingLog(db.Model):
+    """Logs training events with status and metrics."""
+    __tablename__ = 'training_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(50), nullable=False)  # started, completed, failed
+    accuracy = db.Column(db.Float, nullable=True)
+    duration_seconds = db.Column(db.Float, nullable=True)
+    dataset_rows = db.Column(db.Integer, nullable=True)
+    error_message = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class AIAlert(db.Model):
+    """AI-generated alerts for dashboard display."""
+    __tablename__ = 'ai_alerts'
+    id = db.Column(db.Integer, primary_key=True)
+    alert_type = db.Column(db.String(100), nullable=False)  # low_stock, outbreak, no_show_risk
+    severity = db.Column(db.String(20), default='LOW')  # LOW, MEDIUM, HIGH, CRITICAL
+    title = db.Column(db.String(255), nullable=False)
+    message = db.Column(db.Text)
+    dashboard = db.Column(db.String(100))  # hospital, district, doctor, patient
+    is_read = db.Column(db.Boolean, default=False)
+    model_name = db.Column(db.String(100))
+    confidence = db.Column(db.Float, default=0.0)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+

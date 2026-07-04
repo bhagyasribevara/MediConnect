@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
+import { predictDisease } from '../../services/ai_api';
 
 // Icons as inline SVGs
 const HomeIcon = () => (
@@ -88,10 +89,34 @@ export default function PatientDashboard() {
     setIsDoctorLoading(true);
 
     try {
-      const response = await api.post('/copilot/chat', { message: `Role: Patient. Language: ${activeLang}. Symptoms: ${userMsg}` });
-      setChatHistory(prev => [...prev, { sender: 'bot', text: response.data.reply }]);
+      // 1. Get ML Symptom Prediction
+      const extractedSymptoms = userMsg.toLowerCase().split(/[\s,]+/);
+      const mlResponse = await predictDisease(extractedSymptoms);
+      const topDiseaseInfo = mlResponse.data.top_diseases?.[0];
+      const topDisease = topDiseaseInfo?.disease || 'Unknown condition';
+      
+      const description = topDiseaseInfo?.description || 'We recommend consulting a doctor for more details.';
+      const precautions = topDiseaseInfo?.precautions || ['Rest well', 'Consult a doctor'];
+      
+      let finalReply = '';
+      try {
+        // 2. Get Generative AI advice based on ML prediction
+        const response = await api.post('/copilot/chat', { 
+          message: `Role: Patient. Language: ${activeLang}. Symptoms: ${userMsg}. You have been diagnosed with: ${topDisease}. Description: ${description}. Precautions: ${precautions.join(', ')}. Provide a brief, compassionate response explaining the disease and giving suggestions to get cured. Do not mention ML, AI models, or confidence scores.` 
+        });
+        
+        if (response.data.is_fallback) {
+           throw new Error('Fallback triggered');
+        }
+        finalReply = response.data.reply;
+      } catch (e) {
+        // Graceful fallback using local ML model data
+        finalReply = `Based on your symptoms, you might have **${topDisease}**.\n\n**What is it?**\n${description}\n\n**Suggestions:**\n${precautions.map((p: string) => `- ${p.charAt(0).toUpperCase() + p.slice(1)}`).join('\n')}\n\nPlease consult a medical professional for an official diagnosis.`;
+      }
+      
+      setChatHistory(prev => [...prev, { sender: 'bot', text: finalReply }]);
     } catch (e) {
-      setChatHistory(prev => [...prev, { sender: 'bot', text: "Sorry, I am having trouble connecting. Please try again." }]);
+      setChatHistory(prev => [...prev, { sender: 'bot', text: "Sorry, I am having trouble analyzing your symptoms right now. Please seek immediate medical care if it's an emergency." }]);
     } finally {
       setIsDoctorLoading(false);
     }

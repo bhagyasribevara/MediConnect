@@ -94,3 +94,59 @@ CREATE TABLE IF NOT EXISTS bed_bookings (
     FOREIGN KEY (patient_id) REFERENCES patients(id),
     FOREIGN KEY (bed_id) REFERENCES beds(id)
 );
+
+-- ═══════════════════════════════════════════════════════════════
+-- AI/ML Tables — Prediction Logs, Model Metadata, Training Logs
+-- ═══════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS prediction_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    model_name VARCHAR(100) NOT NULL,
+    input_summary TEXT,
+    prediction VARCHAR(255),
+    confidence FLOAT DEFAULT 0.0,
+    dashboard VARCHAR(100),
+    user_id INT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS model_metadata (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    model_name VARCHAR(100) NOT NULL UNIQUE,
+    model_type VARCHAR(100),
+    accuracy FLOAT DEFAULT 0.0,
+    precision_score FLOAT DEFAULT 0.0,
+    recall_score FLOAT DEFAULT 0.0,
+    f1_score FLOAT DEFAULT 0.0,
+    dataset_rows INT DEFAULT 0,
+    training_duration FLOAT DEFAULT 0.0,
+    version INT DEFAULT 1,
+    file_path VARCHAR(255),
+    last_trained_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) DEFAULT 'active'
+);
+
+CREATE TABLE IF NOT EXISTS training_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    model_name VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    accuracy FLOAT DEFAULT NULL,
+    duration_seconds FLOAT DEFAULT NULL,
+    dataset_rows INT DEFAULT NULL,
+    error_message TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ai_alerts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    alert_type VARCHAR(100) NOT NULL,
+    severity VARCHAR(20) DEFAULT 'LOW',
+    title VARCHAR(255) NOT NULL,
+    message TEXT,
+    dashboard VARCHAR(100),
+    is_read BOOLEAN DEFAULT FALSE,
+    model_name VARCHAR(100),
+    confidence FLOAT DEFAULT 0.0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
