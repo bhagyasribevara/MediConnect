@@ -121,13 +121,13 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
   };
 
   return (
-    <div className="min-h-screen flex bg-clay text-dark transition-colors duration-200">
+    <div className="h-screen flex bg-clay text-dark transition-colors duration-200 overflow-hidden">
       
       {/* SIDEBAR */}
-      <aside className={`bg-secondary text-white border-r border-secondary-dark flex flex-col justify-between transition-all duration-300 z-20 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
-        <div>
+      <aside className={`h-screen bg-secondary text-white border-r border-secondary-dark flex flex-col justify-between transition-all duration-300 z-20 flex-shrink-0 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+        <div className="flex flex-col flex-1 min-h-0">
           {/* Logo / Brand */}
-          <div className="h-16 flex items-center px-4 justify-between border-b border-white/20">
+          <div className="h-16 flex items-center px-4 justify-between border-b border-white/20 flex-shrink-0">
             {!isSidebarCollapsed && (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-secondary font-bold text-lg shadow-md">M</div>
@@ -148,7 +148,7 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
           </div>
 
           {/* Navigation Links */}
-          <nav className="p-4 space-y-1.5">
+          <nav className="p-4 space-y-1.5 overflow-y-auto flex-1 min-h-0 scrollbar-none">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -172,7 +172,7 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
         </div>
 
         {/* Footer Role/User & Logout */}
-        <div className="p-4 border-t border-white/20 space-y-3">
+        <div className="p-4 border-t border-white/20 space-y-3 flex-shrink-0">
           {!isSidebarCollapsed && (
             <div className="flex items-center gap-3 bg-white/10 p-2 rounded-xl">
               <div className="w-9 h-9 bg-white text-secondary font-bold rounded-lg flex items-center justify-center shadow-md">

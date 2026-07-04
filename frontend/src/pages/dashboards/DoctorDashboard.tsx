@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
@@ -108,7 +108,6 @@ export default function DoctorDashboard() {
   ]);
 
   const queryClient = useQueryClient();
-  const [availability, setAvailability] = useState(true);
   const [leaveForm, setLeaveForm] = useState({ date: '', reason: '' });
   const [shiftForm, setShiftForm] = useState({ start: '09:00', end: '10:00', max: 10 });
 
