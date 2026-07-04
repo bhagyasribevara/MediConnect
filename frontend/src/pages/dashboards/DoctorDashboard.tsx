@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
+import { io } from 'socket.io-client';
+
+const socket = io('http://127.0.0.1:5000');
 
 // Icons as inline SVGs
 const OverviewIcon = () => (
@@ -43,6 +46,33 @@ export default function DoctorDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+
+  const queryClient = useQueryClient();
+  const doctor_id = 1; // Prototype value
+
+  // Queue fetching
+  const { data: queue = [], isLoading: isLoadingQueue } = useQuery({
+    queryKey: ['doctorQueue', doctor_id],
+    queryFn: async () => {
+      const res = await api.get(`/appointment/queue?doctor_id=${doctor_id}`);
+      return res.data;
+    }
+  });
+
+  useEffect(() => {
+    socket.on('queue_updated', (data) => {
+      if (data.doctor_id == doctor_id) {
+        queryClient.invalidateQueries({ queryKey: ['doctorQueue', doctor_id] });
+      }
+    });
+    return () => {
+      socket.off('queue_updated');
+    };
+  }, [queryClient, doctor_id]);
+
+  const updateQueueStatus = async (queue_id: number, status: string) => {
+    await api.post('/appointment/queue/status', { queue_id, status });
+  };
 
   // Consultation state
   const [consultationForm, setConsultationForm] = useState({
@@ -146,46 +176,56 @@ export default function DoctorDashboard() {
                     <tr className="border-b border-accent/15 text-secondary/70 text-xs">
                       <th className="py-2.5 px-4 font-semibold">Token</th>
                       <th className="py-2.5 px-4 font-semibold">Patient Name</th>
-                      <th className="py-2.5 px-4 font-semibold">Gender/Age</th>
-                      <th className="py-2.5 px-4 font-semibold">Chief Complaint</th>
+                      <th className="py-2.5 px-4 font-semibold">Time</th>
+                      <th className="py-2.5 px-4 font-semibold">Status</th>
                       <th className="py-2.5 px-4 font-semibold">Action</th>
                     </tr>
                   </thead>
                   <tbody className="text-xs text-dark">
-                    <tr className="border-b border-accent/15 hover:bg-accent/10">
-                      <td className="py-2.5 px-4 font-bold text-secondary">MC-2940</td>
-                      <td className="py-2.5 px-4 font-bold">Patient Demo</td>
-                      <td className="py-2.5 px-4">Male • 32y</td>
-                      <td className="py-2.5 px-4 text-secondary/70">Elevated blood pressure, cholesterol review</td>
-                      <td className="py-2.5 px-4">
-                        <button 
-                          onClick={() => {
-                            setSelectedPatient({ name: 'Patient Demo', age: '32', gender: 'Male', history: 'Diagnosed with Hypertension in 2024. Drug allergies: Penicillin.' });
-                            setActiveTab('consultation');
-                          }}
-                          className="px-3 py-1 bg-secondary text-white rounded-lg font-bold shadow hover:bg-[#00a892] transition-colors"
-                        >
-                          Start Visit
-                        </button>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-accent/15 hover:bg-accent/10">
-                      <td className="py-2.5 px-4 font-bold text-secondary">MC-2941</td>
-                      <td className="py-2.5 px-4 font-bold">Rohan Sen</td>
-                      <td className="py-2.5 px-4">Male • 45y</td>
-                      <td className="py-2.5 px-4 text-secondary/70">Persistent dry cough, fever</td>
-                      <td className="py-2.5 px-4">
-                        <button 
-                          onClick={() => {
-                            setSelectedPatient({ name: 'Rohan Sen', age: '45', gender: 'Male', history: 'Non-smoker. Recurrent bronchitis.' });
-                            setActiveTab('consultation');
-                          }}
-                          className="px-3 py-1 bg-secondary text-white rounded-lg font-bold shadow hover:bg-[#00a892]"
-                        >
-                          Start Visit
-                        </button>
-                      </td>
-                    </tr>
+                    {isLoadingQueue ? (
+                      <tr><td colSpan={5} className="py-4 text-center">Loading queue...</td></tr>
+                    ) : queue.length === 0 ? (
+                      <tr><td colSpan={5} className="py-4 text-center">No patients in queue today.</td></tr>
+                    ) : (
+                      queue.map((appt: any) => (
+                        <tr key={appt.appointment_id} className="border-b border-accent/15 hover:bg-accent/10">
+                          <td className="py-2.5 px-4 font-bold text-secondary">{appt.queue_number}</td>
+                          <td className="py-2.5 px-4 font-bold">{appt.patient_name}</td>
+                          <td className="py-2.5 px-4">{appt.time}</td>
+                          <td className="py-2.5 px-4">
+                            <span className={`px-2 py-1 rounded font-bold text-[10px] ${appt.status === 'Waiting' ? 'bg-yellow-100 text-yellow-700' : appt.status === 'In Progress' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
+                              {appt.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-4 flex gap-2">
+                            {appt.status === 'Waiting' && (
+                              <button 
+                                onClick={() => updateQueueStatus(appt.queue_id, 'In Progress')}
+                                className="px-3 py-1 bg-secondary text-white rounded-lg font-bold shadow hover:bg-[#00a892] transition-colors"
+                              >
+                                Start
+                              </button>
+                            )}
+                            {appt.status === 'In Progress' && (
+                              <button 
+                                onClick={() => updateQueueStatus(appt.queue_id, 'Completed')}
+                                className="px-3 py-1 bg-green-500 text-white rounded-lg font-bold shadow hover:bg-green-600 transition-colors"
+                              >
+                                Finish
+                              </button>
+                            )}
+                            {(appt.status === 'Waiting' || appt.status === 'In Progress') && (
+                              <button 
+                                onClick={() => updateQueueStatus(appt.queue_id, 'Skipped')}
+                                className="px-3 py-1 bg-red-500 text-white rounded-lg font-bold shadow hover:bg-red-600 transition-colors"
+                              >
+                                Skip
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

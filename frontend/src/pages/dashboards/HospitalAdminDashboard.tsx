@@ -91,11 +91,15 @@ export default function HospitalAdminDashboard() {
     { id: 6, type: 'Emergency', occupied: true, patient: 'Patient Demo' }
   ]);
 
-  // Appointment slots list
-  const [appointmentsList, setAppointmentsList] = useState<any[]>([
-    { id: 301, patientName: 'John Watson', date: '2026-07-04', time: '10:00 AM', reason: 'Flu symptoms', status: 'Pending' },
-    { id: 302, patientName: 'Sherlock Holmes', date: '2026-07-04', time: '11:00 AM', reason: 'Toxicity check', status: 'Pending' }
-  ]);
+  // Doctor stats for appointments
+  const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
+  const { data: doctorStats = [], isLoading: statsLoading } = useQuery({
+    queryKey: ['hospitalStats', dateStr],
+    queryFn: async () => {
+      const res = await api.get(`/appointment/hospital/stats?hospital_id=1&date=${dateStr}`);
+      return res.data;
+    }
+  });
 
   // Blood bank reserves
   const [bloodStock] = useState<Array<{ type: string; qty: number }>>([
@@ -111,9 +115,11 @@ export default function HospitalAdminDashboard() {
     socket.on('inventory_approved', (data) => {
       setProcurements(prev => prev.map(p => p.medicine === data.medicine ? { ...p, status: 'Approved' } : p));
     });
-    return () => { socket.disconnect(); };
-  }, []);
+    socket.on('slot_updated', () => queryClient.invalidateQueries({ queryKey: ['hospitalStats'] }));
+    socket.on('queue_updated', () => queryClient.invalidateQueries({ queryKey: ['hospitalStats'] }));
 
+    return () => { socket.disconnect(); };
+  }, [queryClient]);
   const { data: metrics, isLoading } = useQuery({
     queryKey: ['hospitalAdminMetrics'],
     queryFn: async () => {
@@ -141,7 +147,6 @@ export default function HospitalAdminDashboard() {
   };
 
   const handleApproveAppointment = (id: number) => {
-    setAppointmentsList(prev => prev.map(a => a.id === id ? { ...a, status: 'Approved' } : a));
     alert("Appointment successfully approved!");
   };
 
@@ -389,42 +394,45 @@ export default function HospitalAdminDashboard() {
         {/* TAB 6: APPOINTMENTS BOOK */}
         {activeTab === 'appointments' && (
           <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
-            <h3 className="text-sm font-bold text-dark">Patient Appointment Registrar</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-dark">Doctor-wise Appointment Statistics</h3>
+              <input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)} className="text-xs px-3 py-2 border rounded-xl outline-none border-accent/40 bg-white shadow-inner" />
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-accent/15 text-secondary/70 text-xs">
-                    <th className="py-2.5 px-4 font-semibold">Patient Name</th>
-                    <th className="py-2.5 px-4 font-semibold">Reason</th>
-                    <th className="py-2.5 px-4 font-semibold">Date / Time Slot</th>
-                    <th className="py-2.5 px-4 font-semibold">Status</th>
-                    <th className="py-2.5 px-4 font-semibold">Action</th>
+                    <th className="py-2.5 px-4 font-semibold">Doctor Name</th>
+                    <th className="py-2.5 px-4 font-semibold">Department</th>
+                    <th className="py-2.5 px-4 font-semibold">Total Slots</th>
+                    <th className="py-2.5 px-4 font-semibold">Booked Consultations</th>
+                    <th className="py-2.5 px-4 font-semibold">Wait/IP Status</th>
+                    <th className="py-2.5 px-4 font-semibold">Completed Consults</th>
                   </tr>
                 </thead>
                 <tbody className="text-xs text-dark">
-                  {appointmentsList.map((app) => (
-                    <tr key={app.id} className="border-b border-accent/15 hover:bg-accent/10">
-                      <td className="py-2.5 px-4 font-bold text-dark">{app.patientName}</td>
-                      <td className="py-2.5 px-4 text-secondary/70">{app.reason}</td>
-                      <td className="py-2.5 px-4 font-bold">{app.date} • {app.time}</td>
-                      <td className="py-2.5 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${app.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                          {app.status}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4">
-                        {app.status === 'Pending' ? (
-                          <div className="flex gap-2">
-                            <button onClick={() => handleApproveAppointment(app.id)} className="text-secondary hover:underline font-bold">Approve</button>
-                            <button onClick={() => setAppointmentsList(prev => prev.filter(a => a.id !== app.id))} className="text-red-500 hover:underline font-bold">Reject</button>
-                          </div>
-                        ) : (
-                          <span className="text-secondary/60 font-semibold">Completed</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {statsLoading ? (
+                    <tr><td colSpan={6} className="py-4 text-center text-secondary/60 font-bold">Loading stats...</td></tr>
+                  ) : doctorStats.length === 0 ? (
+                    <tr><td colSpan={6} className="py-4 text-center text-secondary/60">No doctor data retrieved.</td></tr>
+                  ) : (
+                    doctorStats.map((stat: any, idx: number) => (
+                      <tr key={idx} className="border-b border-accent/15 hover:bg-accent/10">
+                        <td className="py-2.5 px-4 font-bold text-dark flex items-center gap-2">
+                          {stat.doctor_name}
+                          {stat.is_on_leave && <span className="bg-red-100 text-red-600 px-1 py-0.5 rounded text-[9px]">ON LEAVE</span>}
+                        </td>
+                        <td className="py-2.5 px-4 text-secondary/70">{stat.department}</td>
+                        <td className="py-2.5 px-4 font-bold">{stat.slots}</td>
+                        <td className="py-2.5 px-4 text-secondary font-bold">
+                          {stat.booked}
+                        </td>
+                        <td className="py-2.5 px-4 text-yellow-600 font-bold">{stat.pending} Pending</td>
+                        <td className="py-2.5 px-4 text-green-600 font-bold">{stat.completed} Completed</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
