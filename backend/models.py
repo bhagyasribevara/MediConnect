@@ -63,6 +63,14 @@ class Doctor(db.Model):
     user = db.relationship('User', backref=db.backref('doctor_profile', uselist=False))
     hospital = db.relationship('Hospital', backref='doctors')
 
+class DistrictAdminProfile(db.Model):
+    __tablename__ = 'district_admins'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    district_id = db.Column(db.Integer, db.ForeignKey('districts.id'), nullable=False)
+    
+    user = db.relationship('User', backref=db.backref('district_admin_profile', uselist=False))
+    district = db.relationship('District', backref='admins')
 
 class Bed(db.Model):
     __tablename__ = 'beds'
@@ -116,7 +124,7 @@ class PatientRecord(db.Model):
     
     patient = db.relationship('Patient', backref='records')
 
-<<<<<<< HEAD
+
 class DoctorAvailability(db.Model):
     __tablename__ = 'doctor_availability'
     id = db.Column(db.Integer, primary_key=True)
@@ -177,7 +185,7 @@ class Queue(db.Model):
     current_status = db.Column(db.Enum('Waiting', 'In Progress', 'Completed', 'Skipped', 'Cancelled'), default='Waiting')
     
     appointment = db.relationship('Appointment', backref=db.backref('queue_entry', uselist=False))
-=======
+
 class DoctorShift(db.Model):
     __tablename__ = 'doctor_shifts'
     id = db.Column(db.Integer, primary_key=True)
@@ -226,7 +234,7 @@ class DoctorAttendance(db.Model):
     
     doctor = db.relationship('Doctor', backref='attendance_records')
 
-<<<<<<< HEAD
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # AI/ML Models — Prediction Logs, Model Metadata, Training Logs, AI Alerts
@@ -287,6 +295,12 @@ class AIAlert(db.Model):
     confidence = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-=======
->>>>>>> db6ce3f5d93f35bf28d43cd306971e624434d556
->>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
+
+class DistrictAdminProfile(db.Model):
+    __tablename__ = 'district_admin_profiles'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    district_id = db.Column(db.Integer, db.ForeignKey('districts.id'), nullable=False)
+    
+    user = db.relationship('User', backref=db.backref('district_admin_profile', uselist=False))
+    district = db.relationship('District', backref='admins')

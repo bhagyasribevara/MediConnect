@@ -46,6 +46,7 @@ def upload_report(current_user):
     """
 
     try:
+        assert client is not None
         response = client.models.generate_content(
             model='gemini-1.5-flash',
             contents=report_text,
@@ -55,7 +56,8 @@ def upload_report(current_user):
         )
         
         # Clean the response to ensure it's valid JSON
-        result = response.text.replace("```json", "").replace("```", "").strip()
+        text_content = response.text or ""
+        result = text_content.replace("```json", "").replace("```", "").strip()
         
         import json
         structured_data = json.loads(result)

@@ -46,6 +46,7 @@ def chat(current_user):
         if gemini_api_key == "AQ.Ab8RN6K_FDaeu70zKv9CHr5A3g1pXkYRMBKKu1N3Kr1uLZnNsg":
             raise Exception("Known invalid dummy Gemini API key. Skipping remote call for instant offline response.")
             
+        assert client is not None
         response = client.models.generate_content(
             model='gemini-1.5-flash',
             contents=message,

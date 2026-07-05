@@ -29,7 +29,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import xgboost as xgb
 import joblib
 
-from services.ml_pipeline import MODELS_DIR
+from .ml_pipeline import MODELS_DIR
 
 logger = logging.getLogger("mediconnect.district_trainer")
 
@@ -217,17 +217,17 @@ def train_district_model() -> Dict[str, Any]:
         df_cls = df.dropna(subset=["LoadCategory"]).copy()
 
         # Encode categorical columns
-        cat_cols = df_cls.select_dtypes(include=["object"]).columns.tolist()
+        cat_cols = df_cls.select_dtypes(include="object").columns.tolist()
         cat_cols = [c for c in cat_cols if c != "LoadCategory"]
 
         for col in cat_cols:
             le = LabelEncoder()
-            df_cls[col] = le.fit_transform(df_cls[col].astype(str))
+            df_cls[col] = le.fit_transform(df_cls[col].astype(str))  # type: ignore
             le_encoders[col] = le
 
         # Target
         le_target = LabelEncoder()
-        y = le_target.fit_transform(df_cls["LoadCategory"].astype(str))
+        y = le_target.fit_transform(df_cls["LoadCategory"].astype(str))  # type: ignore
         le_encoders["__target__LoadCategory"] = le_target
 
         X = df_cls.drop(columns=["LoadCategory", "CapacityScore"], errors="ignore")
@@ -236,7 +236,7 @@ def train_district_model() -> Dict[str, Any]:
         for col in X.columns:
             if X[col].dtype == "object":
                 le = LabelEncoder()
-                X[col] = le.fit_transform(X[col].astype(str))
+                X[col] = le.fit_transform(X[col].astype(str))  # type: ignore
                 le_encoders[col] = le
 
         X = X.fillna(0)
@@ -269,17 +269,17 @@ def train_district_model() -> Dict[str, Any]:
         df_reg = df.dropna(subset=["CapacityScore"]).copy()
         df_reg = df_reg.drop(columns=["LoadCategory"], errors="ignore")
 
-        for col in df_reg.select_dtypes(include=["object"]).columns:
+        for col in df_reg.select_dtypes(include="object").columns:
             if col not in le_encoders:
                 le = LabelEncoder()
-                df_reg[col] = le.fit_transform(df_reg[col].astype(str))
+                df_reg[col] = le.fit_transform(df_reg[col].astype(str))  # type: ignore
                 le_encoders[col] = le
             else:
                 try:
-                    df_reg[col] = le_encoders[col].transform(df_reg[col].astype(str))
+                    df_reg[col] = le_encoders[col].transform(df_reg[col].astype(str))  # type: ignore
                 except ValueError:
                     le = LabelEncoder()
-                    df_reg[col] = le.fit_transform(df_reg[col].astype(str))
+                    df_reg[col] = le.fit_transform(df_reg[col].astype(str))  # type: ignore
                     le_encoders[col] = le
 
         y_reg = df_reg["CapacityScore"]
@@ -295,8 +295,8 @@ def train_district_model() -> Dict[str, Any]:
         y_pred_r = xgb_reg.predict(X_test_r)
 
         from sklearn.metrics import r2_score, mean_absolute_error
-        r2 = float(r2_score(y_test_r, y_pred_r))
-        mae = float(mean_absolute_error(y_test_r, y_pred_r))
+        r2 = r2_score(y_test_r, y_pred_r)
+        mae = mean_absolute_error(y_test_r, y_pred_r)
         regressor_model = xgb_reg
         results["capacity_regressor"] = {
             "r2_score": round(r2, 4),

@@ -214,21 +214,22 @@ def upload_photo(current_user):
         return jsonify({'error': 'No photo file provided'}), 400
     
     file = request.files['photo']
-    if file.filename == '':
+    filename = file.filename
+    if not filename:
         return jsonify({'error': 'No file selected'}), 400
     
-    if file and allowed_file(file.filename):
+    if file and allowed_file(filename):
         # Ensure upload directory exists
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
         
-        filename = f"doctor_{doctor.id}_{secure_filename(file.filename)}"
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        secure_name = f"doctor_{doctor.id}_{secure_filename(filename)}"
+        filepath = os.path.join(UPLOAD_FOLDER, secure_name)
         file.save(filepath)
         
-        doctor.profile_photo = filename
+        doctor.profile_photo = secure_name
         db.session.commit()
         
-        return jsonify({'message': 'Photo uploaded', 'filename': filename}), 200
+        return jsonify({'message': 'Photo uploaded', 'filename': secure_name}), 200
     
     return jsonify({'error': 'File type not allowed'}), 400
 

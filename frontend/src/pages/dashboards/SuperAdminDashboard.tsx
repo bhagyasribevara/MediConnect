@@ -2,15 +2,11 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
-<<<<<<< HEAD
 import { getModelStatus, retrainModel, retrainAllModels } from '../../services/ai_api';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-=======
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell 
+  AreaChart, Area, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
->>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
 
 // ==========================================
 // 13 Navigation Sidebar Icons (Inline SVGs)
@@ -130,19 +126,21 @@ export default function SuperAdminDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // User list directories
+  // District Admins list directories
   const [userSearch, setUserSearch] = useState('');
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [userForm, setUserForm] = useState({ username: '', role: 'Patient', phone: '' });
-  const [usersList, setUsersList] = useState<any[]>([
-    { id: 1, username: 'patient_yusuf', role: 'Patient', phone: '1234567890', status: 'Active' },
-    { id: 2, username: 'doc_yusuf', role: 'Doctor', phone: '1234567890', status: 'Active' },
-    { id: 3, username: 'hospital_yusuf', role: 'HospitalAdmin', phone: '1234567890', status: 'Active' },
-    { id: 4, username: 'district_yusuf', role: 'DistrictAdmin', phone: '1234567890', status: 'Active' }
-  ]);
+  const [userForm, setUserForm] = useState({ username: '', email: '', password: '', phone_number: '', district_id: '' });
+  
+  const { data: usersList = [], refetch: refetchUsers } = useQuery({
+    queryKey: ['district_admins'],
+    queryFn: async () => {
+      const res = await api.get('/admin/district-admins');
+      return res.data;
+    }
+  });
 
   // AI models active states
-  const [aiModels, setAiModels] = useState<any[]>([
+  const [aiModels] = useState<any[]>([
     { id: 'gemini-pro', name: 'Gemini 1.5 Pro', latency: '420ms', status: 'Active', tokens: '2.4M / 10M' },
     { id: 'gemini-flash', name: 'Gemini 1.5 Flash', latency: '180ms', status: 'Active', tokens: '5.1M / 20M' },
     { id: 'medlm', name: 'MedLM (Clinical Model)', latency: '650ms', status: 'Inactive', tokens: '0 / 1M' }
@@ -169,7 +167,7 @@ export default function SuperAdminDashboard() {
   });
 
   // Fetch AI Model Status
-  const { data: mlModels, refetch: refetchModels } = useQuery({
+  const { data: mlModels, } = useQuery({
     queryKey: ['ml_model_status'],
     queryFn: async () => {
       const res = await getModelStatus();
@@ -196,11 +194,17 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUsersList(prev => [...prev, { id: Date.now(), username: userForm.username, role: userForm.role, phone: userForm.phone, status: 'Active' }]);
-    setIsUserModalOpen(false);
-    setUserForm({ username: '', role: 'Patient', phone: '' });
+    try {
+      await api.post('/admin/district-admins', userForm);
+      refetchUsers();
+      setIsUserModalOpen(false);
+      setUserForm({ username: '', email: '', password: '', phone_number: '', district_id: '' });
+      alert("District Admin created successfully!");
+    } catch (err: any) {
+      alert(`Error creating District Admin: ${err.response?.data?.message || err.message}`);
+    }
   };
 
   const handleRunBackup = () => {
@@ -218,9 +222,7 @@ export default function SuperAdminDashboard() {
     setBroadcastForm({ target: 'All', urgency: 'Info', message: '' });
   };
 
-  const toggleModel = (id: string) => {
-    setAiModels(prev => prev.map(m => m.id === id ? { ...m, status: m.status === 'Active' ? 'Inactive' : 'Active' } : m));
-  };
+  
 
   return (
     <DashboardLayout 
@@ -807,21 +809,21 @@ export default function SuperAdminDashboard() {
                   <thead>
                     <tr className="border-b border-accent/15 text-secondary/70 text-xs">
                       <th className="py-2.5 px-4 font-semibold">Username</th>
-                      <th className="py-2.5 px-4 font-semibold">User Role</th>
+                      <th className="py-2.5 px-4 font-semibold">District</th>
                       <th className="py-2.5 px-4 font-semibold">Phone Contact</th>
                       <th className="py-2.5 px-4 font-semibold">Status</th>
                       <th className="py-2.5 px-4 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="text-xs text-dark">
-                    {usersList.filter(u => u.username.toLowerCase().includes(userSearch.toLowerCase())).map((user) => (
+                    {usersList.filter((u: any) => u.username.toLowerCase().includes(userSearch.toLowerCase())).map((user: any) => (
                       <tr key={user.id} className="border-b border-accent/15 hover:bg-accent/10">
                         <td className="py-2.5 px-4 font-bold text-dark">{user.username}</td>
-                        <td className="py-2.5 px-4 text-secondary/70">{user.role}</td>
-                        <td className="py-2.5 px-4">{user.phone}</td>
+                        <td className="py-2.5 px-4 text-secondary/70">{user.district_name || 'N/A'}</td>
+                        <td className="py-2.5 px-4">{user.phone_number}</td>
                         <td className="py-2.5 px-4"><span className="px-2 py-0.5 bg-green-100 text-green-700 rounded font-bold text-[10px]">{user.status}</span></td>
                         <td className="py-2.5 px-4">
-                          <button onClick={() => setUsersList(prev => prev.filter(u => u.id !== user.id))} className="text-red-500 hover:underline font-bold">Delete</button>
+                          <button className="text-red-500 hover:underline font-bold">Delete</button>
                         </td>
                       </tr>
                     ))}
@@ -831,17 +833,52 @@ export default function SuperAdminDashboard() {
             </div>
           )}
 
-<<<<<<< HEAD
-          {/* TAB 3: AI ML MODELS & API */}
-          {activeTab === 'ai_models' && (
+          {/* ======================================================== */}
+          {/* TAB 3: FACILITY & AI MODELS                              */}
+          {/* ======================================================== */}
+          {activeTab === 'facilities' && (
             <div className="space-y-6">
-              
+              <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
+                <div>
+                  <h3 className="text-base font-extrabold text-dark">Facility Management Panel</h3>
+                  <p className="text-[11px] text-secondary/60 mt-1">Roster of registered system facilities and general server usage load.</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-accent/15 text-secondary/70 text-xs font-bold">
+                        <th className="py-2.5 px-4">Facility Name</th>
+                        <th className="py-2.5 px-4">Type</th>
+                        <th className="py-2.5 px-4 text-center">CPU Load</th>
+                        <th className="py-2.5 px-4 text-center">Memory Load</th>
+                        <th className="py-2.5 px-4 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-xs text-dark font-medium">
+                      {[
+                        { name: 'City Hospital', type: 'Hospital', cpu: '72%', mem: '68%', status: 'Online' },
+                        { name: 'District Health Center', type: 'Health Center', cpu: '48%', mem: '60%', status: 'Online' },
+                        { name: 'Community Clinic', type: 'Clinic', cpu: '35%', mem: '42%', status: 'Online' },
+                      ].map((f, idx) => (
+                        <tr key={idx} className="border-b border-accent/15 hover:bg-accent/10">
+                          <td className="py-2.5 px-4 font-bold">{f.name}</td>
+                          <td className="py-2.5 px-4 text-secondary/70">{f.type}</td>
+                          <td className="py-2.5 px-4 text-center font-bold">{f.cpu}</td>
+                          <td className="py-2.5 px-4 text-center font-bold">{f.mem}</td>
+                          <td className="py-2.5 px-4 text-center">
+                            <span className="px-2 py-0.5 bg-green-150 text-green-700 rounded font-black text-[9px] uppercase">{f.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               {/* ML Pipeline Models (Joblib/Scikit-learn/XGBoost) */}
               <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold text-dark flex items-center gap-2">
-                    <ModelsIcon /> Predictive ML Pipeline Models
-                  </h3>
+                  <h3 className="text-sm font-bold text-dark">Predictive ML Pipeline Models</h3>
                   <button onClick={handleRetrainAll} className="px-3 py-1.5 bg-secondary text-white text-xs font-bold rounded-xl shadow hover:bg-[#00a892]">
                     Retrain All Models
                   </button>
@@ -876,72 +913,6 @@ export default function SuperAdminDashboard() {
                             <span className="text-secondary/60 font-bold">Size</span>
                             <span className="text-dark font-medium">{model.file_size_mb} MB</span>
                           </div>
-=======
-          {/* ======================================================== */}
-          {/* TAB 3: FACILITY MANAGEMENT                               */}
-          {/* ======================================================== */}
-          {activeTab === 'facilities' && (
-            <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
-              <div>
-                <h3 className="text-base font-extrabold text-dark">Facility Management Panel</h3>
-                <p className="text-[11px] text-secondary/60 mt-1">Roster of registered system facilities and general server usage load.</p>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-accent/15 text-secondary/70 text-xs font-bold">
-                      <th className="py-2.5 px-4">Facility Name</th>
-                      <th className="py-2.5 px-4">Type</th>
-                      <th className="py-2.5 px-4 text-center">CPU Load</th>
-                      <th className="py-2.5 px-4 text-center">Memory Load</th>
-                      <th className="py-2.5 px-4 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-xs text-dark font-medium">
-                    {[
-                      { name: 'City Hospital', type: 'Hospital', cpu: '72%', mem: '68%', status: 'Online' },
-                      { name: 'District Health Center', type: 'Health Center', cpu: '48%', mem: '60%', status: 'Online' },
-                      { name: 'Community Clinic', type: 'Clinic', cpu: '35%', mem: '42%', status: 'Online' },
-                    ].map((f, idx) => (
-                      <tr key={idx} className="border-b border-accent/15 hover:bg-accent/10">
-                        <td className="py-2.5 px-4 font-bold">{f.name}</td>
-                        <td className="py-2.5 px-4 text-secondary/70">{f.type}</td>
-                        <td className="py-2.5 px-4 text-center font-bold">{f.cpu}</td>
-                        <td className="py-2.5 px-4 text-center font-bold">{f.mem}</td>
-                        <td className="py-2.5 px-4 text-center">
-                          <span className="px-2 py-0.5 bg-green-150 text-green-700 rounded font-black text-[9px] uppercase">{f.status}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* ======================================================== */}
-          {/* TAB 4: AI LLM MODELS                                     */}
-          {/* ======================================================== */}
-          {activeTab === 'ai_models' && (
-            <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
-              <h3 className="text-base font-extrabold text-dark">Active Gemini API Deployments</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {aiModels.map((model) => (
-                  <div key={model.id} className="p-5 border border-accent/25 rounded-2xl bg-accent/20 flex flex-col justify-between space-y-4">
-                    <div>
-                      <div className="flex justify-between items-center">
-                        <h4 className="font-bold text-xs text-dark">{model.name}</h4>
-                        <span className={`px-2 py-0.5 rounded font-bold text-[9px] uppercase ${model.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-650'}`}>{model.status}</span>
-                      </div>
-                      <div className="mt-4 text-xs space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-secondary/75 font-semibold">Response Latency</span>
-                          <span className="font-bold">{model.latency}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-secondary/75 font-semibold">Token Limit quota</span>
-                          <span className="font-bold">{model.tokens}</span>
->>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
                         </div>
                       </div>
                       
@@ -949,7 +920,6 @@ export default function SuperAdminDashboard() {
                         Initiate Retraining
                       </button>
                     </div>
-<<<<<<< HEAD
                   ))}
                   
                   {!mlModels?.models && (
@@ -958,19 +928,9 @@ export default function SuperAdminDashboard() {
                     </div>
                   )}
                 </div>
-=======
-                    <button 
-                      onClick={() => toggleModel(model.id)}
-                      className={`w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${model.status === 'Active' ? 'bg-red-500 text-white hover:bg-red-650' : 'bg-secondary text-white hover:bg-[#00a892]'}`}
-                    >
-                      {model.status === 'Active' ? 'Disable Model' : 'Enable Model'}
-                    </button>
-                  </div>
-                ))}
->>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
               </div>
 
-              {/* Gemini LLM API Status (Existing) */}
+              {/* Gemini LLM API Status */}
               <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
                 <h3 className="text-sm font-bold text-dark">Active Generative AI (LLM) Deployments</h3>
 
@@ -1261,11 +1221,11 @@ export default function SuperAdminDashboard() {
         </div>
       )}
 
-      {/* MODAL: Register User */}
+      {/* MODAL: Register District Admin */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl w-full max-w-sm border border-accent/30 shadow-2xl">
-            <h3 className="text-base font-extrabold text-dark mb-4">Register System Account</h3>
+            <h3 className="text-base font-extrabold text-dark mb-4">Register District Admin</h3>
             <form onSubmit={handleAddUser} className="space-y-4 text-xs">
               <div>
                 <label className="block text-secondary/60 font-bold mb-1">Username</label>
@@ -1277,31 +1237,47 @@ export default function SuperAdminDashboard() {
                   required 
                 />
               </div>
+              <div>
+                <label className="block text-secondary/60 font-bold mb-1">Email</label>
+                <input 
+                  type="email"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                  className="w-full px-3 py-2 border border-accent/40 rounded-xl bg-white outline-none"
+                  required 
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-secondary/60 font-bold mb-1">Account Role</label>
-                  <select 
-                    value={userForm.role}
-                    onChange={(e) => setUserForm({...userForm, role: e.target.value})}
+                  <label className="block text-secondary/60 font-bold mb-1">Password</label>
+                  <input 
+                    type="password"
+                    value={userForm.password}
+                    onChange={(e) => setUserForm({...userForm, password: e.target.value})}
                     className="w-full px-3 py-2 border border-accent/40 rounded-xl bg-white outline-none"
-                  >
-                    <option>Patient</option>
-                    <option>Doctor</option>
-                    <option>HospitalAdmin</option>
-                    <option>DistrictAdmin</option>
-                    <option>SuperAdmin</option>
-                  </select>
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block text-secondary/60 font-bold mb-1">Contact Phone</label>
                   <input 
                     type="text"
-                    value={userForm.phone}
-                    onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
+                    value={userForm.phone_number}
+                    onChange={(e) => setUserForm({...userForm, phone_number: e.target.value})}
                     className="w-full px-3 py-2 border border-accent/40 rounded-xl bg-white outline-none"
                     required 
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-secondary/60 font-bold mb-1">District ID</label>
+                <input 
+                  type="number"
+                  value={userForm.district_id}
+                  onChange={(e) => setUserForm({...userForm, district_id: e.target.value})}
+                  className="w-full px-3 py-2 border border-accent/40 rounded-xl bg-white outline-none"
+                  required 
+                />
               </div>
               <div className="flex gap-2.5 justify-end pt-4">
                 <button 

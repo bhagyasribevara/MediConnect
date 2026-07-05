@@ -180,6 +180,23 @@ class DistrictService:
         except Exception as e:
             logger.error("Analytics failed: %s", str(e))
             return self._error_response(str(e))
+    def _heuristic_outbreak(self, state: str, disease: str, current_cases: int) -> Dict[str, Any]:
+        """Simple heuristic fallback if ML model fails to load."""
+        baseline = 10  # fallback baseline
+        pred_cases = int(current_cases * 1.1)
+        outbreak_prob = min(0.99, (current_cases / baseline) * 0.2) if current_cases > baseline else 0.1
+        
+        return {
+            "status": "success",
+            "state": state,
+            "district": "Unknown",
+            "disease": disease,
+            "predicted_cases_next_week": pred_cases,
+            "outbreak_probability": round(outbreak_prob, 2),
+            "is_outbreak": outbreak_prob > 0.65,
+            "confidence": 0.5,
+            "model_used": "Heuristic Fallback"
+        }
 
     def predict_outbreak(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """

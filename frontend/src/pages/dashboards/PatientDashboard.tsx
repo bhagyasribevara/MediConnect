@@ -2,13 +2,10 @@ import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
-<<<<<<< HEAD
 import { predictDisease } from '../../services/ai_api';
-=======
 import { io } from 'socket.io-client';
 
 const socket = io('http://127.0.0.1:5000');
->>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
 
 // Icons as inline SVGs
 const HomeIcon = () => (

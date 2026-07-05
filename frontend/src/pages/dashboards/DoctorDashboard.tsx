@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
-<<<<<<< HEAD
 import { getAppointmentLoad, getFootfall, predictDisease } from '../../services/ai_api';
-=======
 import { io } from 'socket.io-client';
 
+import { 
+  AIHealthSummary, DoctorSummary, OPDLoadAndForecast, InsightsAndAlerts, QuickActions, DoctorPerformance 
+} from '../../components/doctor/DashboardWidgets';
+import { AIPriorityQueue, ConsultationQueue } from '../../components/doctor/PatientQueues';
+import { AIClinicalDecision, MedLensReports, LabReports } from '../../components/doctor/ClinicalSupport';
+import PatientDetailsModal from '../../components/doctor/PatientDetailsModal';
+
+
 const socket = io('http://127.0.0.1:5000');
->>>>>>> 99fdc27202c99ed6e249142b2351bb55e5424ad4
 
 // ─── Icon Components ────────────────────────────────────────────────────
 const DashboardIcon = () => (
@@ -97,6 +102,7 @@ export default function DoctorDashboard() {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const doctor_id = 1; // Prototype value
@@ -672,6 +678,26 @@ export default function DoctorDashboard() {
                 </div>
               </ClayCard>
             </div>
+
+            {/* ─── NEW COMPONENT INTEGRATION ─────────────────────────────────────────────── */}
+            <div className="mt-8 border-t border-accent/20 pt-8">
+              <h2 className="text-xl font-extrabold text-dark mb-6">Enhanced AI Features</h2>
+              <AIHealthSummary />
+              
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-6">
+                <div className="xl:col-span-2 space-y-8">
+                  <OPDLoadAndForecast />
+                  <DoctorSummary />
+                  <ConsultationQueue queue={queue} updateQueueStatus={updateQueueStatus} onPatientClick={(p) => { setSelectedPatient(p); setIsModalOpen(true); }} />
+                </div>
+                <div className="space-y-8">
+                  <QuickActions />
+                  <InsightsAndAlerts />
+                  <AIPriorityQueue onPatientClick={(p) => { setSelectedPatient(p); setIsModalOpen(true); }} />
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
 
@@ -1486,6 +1512,13 @@ export default function DoctorDashboard() {
           </div>
         )}
 
+
+
+        <PatientDetailsModal 
+          patient={selectedPatient}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
       </div>
     </DashboardLayout>
   );

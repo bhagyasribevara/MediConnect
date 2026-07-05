@@ -106,14 +106,22 @@ class DatasetAnalyzer:
             raise ValueError(f"Could not find JSON array in {filepath}")
 
         json_str = match.group(0)
-        # Clean JS → JSON: remove trailing commas, convert single quotes
+        # Clean JS → JSON: remove trailing commas
         json_str = re.sub(r",\s*([\]}])", r"\1", json_str)
-        json_str = json_str.replace("'", '"')
         
-        # Add quotes to unquoted keys
-        json_str = re.sub(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', json_str)
+        # Add quotes to unquoted keys (only at the beginning of lines)
+        json_str = re.sub(r'(?m)^(\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', json_str)
+        
+        # Remove single-line JS comments
+        json_str = re.sub(r'//.*', '', json_str)
+        
+        # Remove any module.exports or trailing semicolons that might have been matched
+        json_str = re.sub(r'module\.exports\s*=.*', '', json_str)
+        json_str = json_str.strip()
+        if json_str.endswith(';'):
+            json_str = json_str[:-1]
 
-        data = json.loads(json_str)
+        data = json.loads(json_str, strict=False)
         return pd.DataFrame(data)
 
     @staticmethod

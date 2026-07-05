@@ -224,9 +224,9 @@ export default function DistrictAdminDashboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h1 className="text-xl md:text-2xl font-extrabold text-dark tracking-tight flex items-center gap-2">
-                  Good Morning, District Administrator <span className="animate-bounce">👋</span>
+                  Good Morning, {metrics?.district_name ? `${metrics.district_name} Admin` : 'District Administrator'} <span className="animate-bounce">👋</span>
                 </h1>
-                <p className="text-xs text-secondary/70 font-semibold mt-1">Here's the comprehensive overview of your district healthcare system.</p>
+                <p className="text-xs text-secondary/70 font-semibold mt-1">Here's the comprehensive overview of {metrics?.district_name || 'your district'}'s healthcare system.</p>
               </div>
               <div className="flex items-center gap-2.5 px-4 py-2 bg-white rounded-xl shadow-clay border border-accent/30 text-xs font-bold text-secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-secondary">
@@ -799,18 +799,18 @@ export default function DistrictAdminDashboard() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {facilitiesList.map(h => (
+              {(metrics?.hospitals_list || []).map((h: any) => (
                 <div key={h.id} className="p-5 border border-accent/25 rounded-2xl bg-accent/15 flex flex-col justify-between hover:shadow-md transition-shadow">
                   <div className="space-y-2">
                     <span className="px-2 py-0.5 bg-secondary/15 text-secondary text-[9px] font-bold rounded">{h.type}</span>
                     <h4 className="font-extrabold text-sm text-dark leading-snug">{h.name}</h4>
-                    <p className="text-xs text-secondary/70">Beds capacity: <span className="font-bold text-dark">{h.beds} total</span></p>
+                    <p className="text-xs text-secondary/70">Beds capacity: <span className="font-bold text-dark">{h.total_beds} total</span></p>
                   </div>
                   <div className="flex items-center justify-between border-t border-accent/20 pt-4 mt-4 text-xs">
-                    <span className="font-bold text-secondary">Compliance: {h.compliance}%</span>
+                    <span className="font-bold text-secondary">Available: {h.available_beds}</span>
                     <span className={`px-2 py-0.5 rounded font-black text-[9px] uppercase ${
-                      h.load === 'High' ? 'bg-red-150 text-red-700' : 'bg-green-150 text-green-700'
-                    }`}>Load: {h.load}</span>
+                      h.available_beds < 10 ? 'bg-red-150 text-red-700' : 'bg-green-150 text-green-700'
+                    }`}>Load: {h.available_beds < 10 ? 'High' : 'Low'}</span>
                   </div>
                 </div>
               ))}
@@ -848,16 +848,16 @@ export default function DistrictAdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="text-xs text-dark">
-                  {facilitiesList.map((f) => (
+                  {(metrics?.hospitals_list || []).map((f: any) => (
                     <tr key={f.id} className="border-b border-accent/15 hover:bg-accent/10">
                       <td className="py-2.5 px-4 font-bold text-dark">{f.name}</td>
                       <td className="py-2.5 px-4 text-secondary/70 font-semibold">{f.type}</td>
-                      <td className="py-2.5 px-4 font-bold">{f.beds} beds</td>
-                      <td className="py-2.5 px-4 font-bold text-secondary">{f.compliance}%</td>
+                      <td className="py-2.5 px-4 font-bold">{f.total_beds} beds</td>
+                      <td className="py-2.5 px-4 font-bold text-secondary">Avail: {f.available_beds}</td>
                       <td className="py-2.5 px-4">
                         <span className={`px-2 py-0.5 rounded font-black text-[9px] uppercase ${
-                          f.load === 'High' ? 'bg-red-100 text-red-700' : f.load === 'Medium' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'
-                        }`}>{f.load}</span>
+                          f.available_beds < 10 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                        }`}>{f.available_beds < 10 ? 'High' : 'Low'}</span>
                       </td>
                     </tr>
                   ))}

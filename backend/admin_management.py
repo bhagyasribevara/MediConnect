@@ -1,8 +1,8 @@
 # pyrefly: ignore [missing-import, unexpected-keyword]
 # pyright: ignore[reportMissingImports, reportCallIssue]
 from flask import Blueprint, request, jsonify, current_app
-from models import db, User, Role, Doctor, Hospital, DoctorShift, ShiftQueue, LeaveRequest, DoctorAttendance
-from dashboard import token_required
+from models import db, User, Role, Doctor, Hospital, DoctorShift, ShiftQueue, LeaveRequest, DoctorAttendance, DistrictAdminProfile, District  # type: ignore
+from dashboard import token_required  # type: ignore
 from werkzeug.security import generate_password_hash
 from datetime import datetime, date
 
@@ -183,3 +183,75 @@ def update_attendance(current_user, attendance_id):
         
     db.session.commit()
     return jsonify({'message': 'Attendance updated successfully'}), 200
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Super Admin Endpoints
+# ═══════════════════════════════════════════════════════════════════════════
+
+@admin_management_bp.route('/district-admins', methods=['GET'])
+@token_required
+def get_district_admins(current_user):
+    if current_user.role.name != 'SuperAdmin':
+        return jsonify({'message': 'Unauthorized'}), 403
+        
+    admins = DistrictAdminProfile.query.all()
+    result = []
+    for admin in admins:
+        result.append({
+            'id': admin.id,
+            'user_id': admin.user_id,
+            'username': admin.user.username,
+            'email': admin.user.email,
+            'phone_number': admin.user.phone_number,
+            'district_id': admin.district_id,
+            'district_name': admin.district.name if admin.district else None,
+            'status': 'Active' if not admin.user.soft_delete else 'Inactive'
+        })
+    return jsonify(result), 200
+
+@admin_management_bp.route('/district-admins', methods=['POST'])
+@token_required
+def add_district_admin(current_user):
+    if current_user.role.name != 'SuperAdmin':
+        return jsonify({'message': 'Unauthorized'}), 403
+        
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    phone_number = data.get('phone_number')
+    district_id = data.get('district_id')
+    
+    if not all([username, password, district_id]):
+        return jsonify({'error': 'Missing required fields (username, password, district_id)'}), 400
+        
+    if User.query.filter_by(username=username).first():
+        return jsonify({'error': 'Username already exists'}), 400
+        
+    role = Role.query.filter_by(name='DistrictAdmin').first()
+    if not role:
+        return jsonify({'error': 'DistrictAdmin role not found'}), 500
+        
+    # Verify district exists
+    district = District.query.get(district_id)
+    if not district:
+        return jsonify({'error': 'District not found'}), 404
+        
+    new_user = User(
+        username=username,
+        email=email,
+        phone_number=phone_number,
+        password_hash=generate_password_hash(password),
+        role_id=role.id
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    
+    new_admin = DistrictAdminProfile(
+        user_id=new_user.id,
+        district_id=district_id
+    )
+    db.session.add(new_admin)
+    db.session.commit()
+    
+    return jsonify({'message': 'District Admin added successfully', 'admin_id': new_admin.id}), 201

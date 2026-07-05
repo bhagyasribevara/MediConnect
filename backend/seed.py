@@ -1,5 +1,5 @@
 from app import create_app
-from models import db, Role, User, District, Hospital, Bed, Doctor, DoctorShift, ShiftQueue
+from models import db, Role, User, District, Hospital, Bed, Doctor, DoctorShift, ShiftQueue, DistrictAdminProfile
 # pyrefly: ignore [missing-import, unexpected-keyword]
 # pyright: ignore[reportMissingImports, reportCallIssue]
 from werkzeug.security import generate_password_hash
@@ -72,6 +72,21 @@ def seed_database():
                 db.session.add(user)
         
         db.session.commit()
+
+        db.session.commit()
+
+        # ─── Seed District Admin Profile ─────────────────────────────────
+        print("Seeding district admin profile...")
+        da_user = User.query.filter_by(username='district_yusuf').first()
+        from models import DistrictAdminProfile
+        if da_user and not DistrictAdminProfile.query.filter_by(user_id=da_user.id).first():
+            da_profile = DistrictAdminProfile( #type:ignore
+                user_id=da_user.id,
+                district_id=district.id
+            )
+            db.session.add(da_profile)
+            db.session.commit()
+            print(f"  District Admin profile created for {da_user.username}")
 
         # ─── Seed Doctor Profile ─────────────────────────────────────────
         print("Seeding doctor profile...")

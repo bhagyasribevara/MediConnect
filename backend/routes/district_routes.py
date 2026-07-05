@@ -89,7 +89,7 @@ def predict_patient_load():
 
 @district_bp.route("/analytics", methods=["GET"])
 @district_bp.route("/analytics/<state>", methods=["GET"])
-def get_analytics(state: str = None):
+def get_analytics(state: str | None = None):
     """
     Get healthcare analytics for a state or all states.
 

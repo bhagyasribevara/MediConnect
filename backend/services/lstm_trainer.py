@@ -2,19 +2,14 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.neural_network import MLPRegressor
 import joblib
 import warnings
 
-# Suppress TF logs
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+# Suppress warnings
+warnings.filterwarnings('ignore')
 
-try:
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import LSTM, Dense, Dropout
-    from tensorflow.keras.callbacks import EarlyStopping
-    TF_AVAILABLE = True
-except ImportError:
-    TF_AVAILABLE = False
+TF_AVAILABLE = False
 
 DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "..", "datasets", "indian_statistics_datasets", "idsp_simulated_data.csv")
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "models")
@@ -31,10 +26,6 @@ def prepare_sequence_data(data_series, look_back):
 
 def train_district_lstm():
     """Trains an LSTM model for district disease outbreak forecasting."""
-    if not TF_AVAILABLE:
-        print("TensorFlow is not installed. Skipping LSTM training.")
-        return {"status": "skipped", "message": "TensorFlow not installed"}
-
     print(f"Loading simulated IDSP data from {DATASET_PATH}...")
     if not os.path.exists(DATASET_PATH):
         print("IDSP simulated data not found. Please generate it first.")
@@ -42,9 +33,7 @@ def train_district_lstm():
 
     df = pd.read_csv(DATASET_PATH)
     
-    # We will train a general LSTM to predict 'Cases' based on the sequence of previous cases.
-    # In a more advanced setup, we would train separate models per disease/district or pass them as categorical embeddings.
-    # For this demonstration, we train a unified model on the scaled sequential case data.
+    # We will train a general MLP to predict 'Cases' based on the sequence of previous cases.
     
     # We'll normalize the cases
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -69,32 +58,26 @@ def train_district_lstm():
         return None, None
         
     X_train = np.vstack(X_train_all)
-    Y_train = np.vstack(Y_train_all)
+    Y_train = np.vstack(Y_train_all).ravel()
     
-    # Build LSTM Model
-    print("Building LSTM model...")
-    model = Sequential()
-    model.add(LSTM(50, activation='relu', return_sequences=True, input_shape=(LOOK_BACK, 1)))
-    model.add(Dropout(0.2))
-    model.add(LSTM(50, activation='relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(1))
+    # Build MLP Model instead of LSTM
+    print("Building MLP model (Fallback for LSTM)...")
+    # Reshape X_train for MLP (samples, features)
+    X_train_flat = X_train.reshape((X_train.shape[0], X_train.shape[1]))
     
-    model.compile(optimizer='adam', loss='mse')
+    model = MLPRegressor(hidden_layer_sizes=(50, 50), max_iter=20, early_stopping=True)
     
-    print(f"Training LSTM on {len(X_train)} sequences...")
-    early_stop = EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
-    
-    model.fit(X_train, Y_train, epochs=10, batch_size=32, verbose=1, callbacks=[early_stop])
+    print(f"Training MLP on {len(X_train)} sequences...")
+    model.fit(X_train_flat, Y_train)
     
     # Save the model
     os.makedirs(MODEL_DIR, exist_ok=True)
-    lstm_path = os.path.join(MODEL_DIR, "district_outbreak_lstm.h5")
+    lstm_path = os.path.join(MODEL_DIR, "district_outbreak_lstm.pkl")
     scaler_path = os.path.join(MODEL_DIR, "district_outbreak_scaler.joblib")
     
-    model.save(lstm_path)
+    joblib.dump(model, lstm_path)
     joblib.dump(scaler, scaler_path)
-    print(f"LSTM model saved to {lstm_path}")
+    print(f"MLP model saved to {lstm_path}")
     
     # We also return a mock bundle for the ModelRegistry UI
     bundle = {

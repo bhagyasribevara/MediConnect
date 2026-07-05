@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, current_app
 from functools import wraps
 import jwt
-from models import db, User, Role, Hospital, Bed, Doctor, LeaveRequest, DoctorShift, DoctorAttendance, ShiftQueue, PatientRecord
+from models import db, User, Role, Hospital, Bed, Doctor, LeaveRequest, DoctorShift, DoctorAttendance, ShiftQueue, PatientRecord, DistrictAdminProfile, District
 from datetime import date
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -80,13 +80,41 @@ def districtadmin_dashboard(current_user):
     if current_user.role.name != 'DistrictAdmin':
         return jsonify({'message': 'Unauthorized'}), 403
         
-    total_hospitals = Hospital.query.count()
+    from models import DistrictAdminProfile
+    profile = DistrictAdminProfile.query.filter_by(user_id=current_user.id).first()
+    district_id = profile.district_id if profile else None
     
+    if not district_id:
+        return jsonify({'error': 'District not assigned to this admin'}), 400
+
+    hospitals = Hospital.query.filter_by(district_id=district_id).all()
+    hospital_ids = [h.id for h in hospitals]
+    
+    total_hospitals = len(hospitals)
+    total_district_beds = Bed.query.filter(Bed.hospital_id.in_(hospital_ids)).count() if hospital_ids else 0
+    available_beds = Bed.query.filter(Bed.hospital_id.in_(hospital_ids), Bed.status == 'Available').count() if hospital_ids else 0
+    
+    hospitals_data = []
+    for h in hospitals:
+        h_beds_total = Bed.query.filter_by(hospital_id=h.id).count()
+        h_beds_avail = Bed.query.filter_by(hospital_id=h.id, status='Available').count()
+        hospitals_data.append({
+            'id': h.id,
+            'name': h.name,
+            'type': h.hospital_type,
+            'total_beds': h_beds_total,
+            'available_beds': h_beds_avail
+        })
+        
     return jsonify({
         'metrics': {
+            'district_name': profile.district.name if profile.district else 'Unknown',
             'total_hospitals': total_hospitals,
+            'total_district_beds': total_district_beds,
+            'available_beds': available_beds,
             'active_outbreaks': 0,
-            'resource_recommendations': 'Transfer 50 units of Paracetamol from PHC-1 to City Hospital.'
+            'resource_recommendations': 'Transfer 50 units of Paracetamol from PHC-1 to City Hospital.',
+            'hospitals_list': hospitals_data
         }
     }), 200
 

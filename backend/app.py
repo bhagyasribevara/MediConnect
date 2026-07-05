@@ -21,7 +21,7 @@ from doctor_management import doctor_mgmt_bp
 from admin_management import admin_management_bp
 
 # AI/ML Route Blueprints
-from routes.appointment_routes import appointment_bp
+from routes.appointment_routes import appointment_bp as appointment_predict_bp
 from routes.medicine_routes import medicine_bp
 from routes.symptom_routes import symptom_bp
 from routes.district_routes import district_bp
@@ -56,7 +56,7 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_management_bp, url_prefix='/api/admin')
 
     # ─── AI/ML Prediction Blueprints ─────────────────────────────
-    app.register_blueprint(appointment_bp, url_prefix='/api/predict')
+    app.register_blueprint(appointment_predict_bp, url_prefix='/api/predict')
     app.register_blueprint(medicine_bp, url_prefix='/api/predict')
     app.register_blueprint(symptom_bp, url_prefix='/api/predict')
     app.register_blueprint(district_bp, url_prefix='/api/predict')
