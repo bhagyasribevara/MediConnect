@@ -3,29 +3,6 @@ from datetime import datetime, timezone
 
 db = SQLAlchemy()
 
-class Role(db.Model):
-    __tablename__ = 'roles'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
-    
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False, unique=True)
-    email = db.Column(db.String(255), nullable=True, unique=True)
-    password_hash = db.Column(db.String(255), nullable=False)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
-    phone_number = db.Column(db.String(15))
-    failed_login_attempts = db.Column(db.Integer, default=0)
-    lockout_until = db.Column(db.DateTime, nullable=True)
-    reset_otp = db.Column(db.String(6), nullable=True)
-    reset_otp_expires = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    soft_delete = db.Column(db.Boolean, default=False)
-    
-    role = db.relationship('Role', backref='users')
-
 class District(db.Model):
     __tablename__ = 'districts'
     id = db.Column(db.Integer, primary_key=True)
@@ -45,31 +22,121 @@ class Hospital(db.Model):
 class Patient(db.Model):
     __tablename__ = 'patients'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=True, unique=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    phone_number = db.Column(db.String(15))  # Mobile Number
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    lockout_until = db.Column(db.DateTime, nullable=True)
+    reset_otp = db.Column(db.String(6), nullable=True)
+    reset_otp_expires = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    soft_delete = db.Column(db.Boolean, default=False)
+    
     emergency_contact = db.Column(db.String(15))
     blood_group = db.Column(db.Enum('A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'))
-    
-    user = db.relationship('User', backref=db.backref('patient_profile', uselist=False))
+
+    @property
+    def role(self):
+        class MockRole:
+            name = 'Patient'
+        return MockRole()
+
+    @property
+    def user(self):
+        return self
+
+    @property
+    def user_id(self):
+        return self.id
+
 
 class Doctor(db.Model):
     __tablename__ = 'doctors'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
-    hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=False)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=True, unique=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    phone_number = db.Column(db.String(15))
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    lockout_until = db.Column(db.DateTime, nullable=True)
+    reset_otp = db.Column(db.String(6), nullable=True)
+    reset_otp_expires = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    soft_delete = db.Column(db.Boolean, default=False)
+    
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=True)
+    specialization = db.Column(db.String(100), nullable=False)
     department = db.Column(db.String(100), nullable=False)
     is_on_leave = db.Column(db.Boolean, default=False)
     profile_photo = db.Column(db.String(255), nullable=True)
     
-    user = db.relationship('User', backref=db.backref('doctor_profile', uselist=False))
     hospital = db.relationship('Hospital', backref='doctors')
+
+    @property
+    def role(self):
+        class MockRole:
+            name = 'Doctor'
+        return MockRole()
+
+    @property
+    def user(self):
+        return self
+
+    @property
+    def user_id(self):
+        return self.id
+
+
+class Admin(db.Model):
+    __tablename__ = 'admins'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), nullable=False, unique=True)
+    email = db.Column(db.String(255), nullable=True, unique=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    phone_number = db.Column(db.String(15))
+    role_level = db.Column(db.Enum('Hospital', 'District', 'Super'), nullable=False)
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=True)
+    district_id = db.Column(db.Integer, db.ForeignKey('districts.id'), nullable=True)
+    
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    lockout_until = db.Column(db.DateTime, nullable=True)
+    reset_otp = db.Column(db.String(6), nullable=True)
+    reset_otp_expires = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    soft_delete = db.Column(db.Boolean, default=False)
+    
+    hospital = db.relationship('Hospital', backref='hospital_admins')
+    district = db.relationship('District', backref='district_admins')
+
+    @property
+    def role(self):
+        class MockRole:
+            def __init__(self, level):
+                self.name = level + 'Admin'
+            def __str__(self):
+                return self.name
+        return MockRole(self.role_level)
+
+    @property
+    def user(self):
+        return self
+
+    @property
+    def user_id(self):
+        return self.id
+
 
 class DistrictAdminProfile(db.Model):
     __tablename__ = 'district_admins'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('admins.id'), nullable=False, unique=True)
     district_id = db.Column(db.Integer, db.ForeignKey('districts.id'), nullable=False)
     
-    user = db.relationship('User', backref=db.backref('district_admin_profile', uselist=False))
+    user = db.relationship('Admin', backref=db.backref('district_admin_profile', uselist=False))
     district = db.relationship('District', backref='admins')
 
 class Bed(db.Model):
@@ -218,7 +285,7 @@ class LeaveRequest(db.Model):
     leave_date = db.Column(db.Date, nullable=False)
     reason = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(20), default='Pending')  # Pending, Approved, Rejected
-    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    approved_by = db.Column(db.Integer, db.ForeignKey('admins.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     doctor = db.relationship('Doctor', backref='leave_requests')
@@ -235,7 +302,6 @@ class DoctorAttendance(db.Model):
     doctor = db.relationship('Doctor', backref='attendance_records')
 
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 # AI/ML Models — Prediction Logs, Model Metadata, Training Logs, AI Alerts
 # ═══════════════════════════════════════════════════════════════════════════
@@ -249,7 +315,7 @@ class PredictionLog(db.Model):
     prediction = db.Column(db.String(255))  # Prediction result
     confidence = db.Column(db.Float, default=0.0)
     dashboard = db.Column(db.String(100))  # Which dashboard requested it
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user_id = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class ModelMetadata(db.Model):
@@ -295,6 +361,8 @@ class AIAlert(db.Model):
     confidence = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+<<<<<<< HEAD
+=======
 # ═══════════════════════════════════════════════════════════════════════════
 # Phase 1: New Application & System Models
 # ═══════════════════════════════════════════════════════════════════════════
@@ -377,3 +445,4 @@ class SystemSetting(db.Model):
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
+>>>>>>> af3e6bd19a88f5225505c135cef4c7a43378b022

@@ -32,6 +32,17 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
   const [activeLang, setActiveLang] = useState('English');
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    api.get('/auth/me')
+      .then(res => {
+        setCurrentUser(res.data);
+      })
+      .catch(err => {
+        console.error('Failed to load user profile in layout:', err);
+      });
+  }, []);
   
   // Notification States
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -176,11 +187,11 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
           {!isSidebarCollapsed && (
             <div className="flex items-center gap-3 bg-white/10 p-2 rounded-xl">
               <div className="w-9 h-9 bg-white text-secondary font-bold rounded-lg flex items-center justify-center shadow-md">
-                {role.charAt(0)}
+                {(currentUser?.username || role).charAt(0).toUpperCase()}
               </div>
               <div className="overflow-hidden">
-                <p className="text-xs font-bold text-white truncate">{role} User</p>
-                <p className="text-[10px] text-white/70 font-medium truncate">demo_{role.toLowerCase()}</p>
+                <p className="text-xs font-bold text-white truncate">{currentUser?.username || `${role} User`}</p>
+                <p className="text-[10px] text-white/70 font-medium truncate">{currentUser?.email || `demo_${role.toLowerCase()}`}</p>
               </div>
             </div>
           )}
@@ -309,8 +320,8 @@ export default function DashboardLayout({ title, role, tabs, activeTab, setActiv
               {isProfileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-accent/25 rounded-2xl shadow-xl z-50 overflow-hidden py-1 text-xs">
                   <div className="px-4 py-2 border-b border-accent/15 bg-accent/20">
-                    <p className="font-bold text-dark">demo_{role.toLowerCase()}</p>
-                    <p className="text-[10px] text-dark/60">{role}</p>
+                    <p className="font-bold text-dark">{currentUser?.username || `demo_${role.toLowerCase()}`}</p>
+                    <p className="text-[10px] text-dark/60">{currentUser?.email || role}</p>
                   </div>
                   <button className="w-full text-left px-4 py-2 hover:bg-accent/25 text-dark font-medium">My Profile</button>
                   <button className="w-full text-left px-4 py-2 hover:bg-accent/25 text-dark font-medium">Account Settings</button>

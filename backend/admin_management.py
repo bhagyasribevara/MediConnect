@@ -1,7 +1,7 @@
 # pyrefly: ignore [missing-import, unexpected-keyword]
 # pyright: ignore[reportMissingImports, reportCallIssue]
 from flask import Blueprint, request, jsonify, current_app
-from models import db, User, Role, Doctor, Hospital, DoctorShift, ShiftQueue, LeaveRequest, DoctorAttendance, DistrictAdminProfile, District  # type: ignore
+from models import db, Patient, Doctor, Admin, Hospital, DoctorShift, ShiftQueue, LeaveRequest, DoctorAttendance, DistrictAdminProfile, District  # type: ignore
 from dashboard import token_required  # type: ignore
 from werkzeug.security import generate_password_hash
 from datetime import datetime, date
@@ -46,33 +46,17 @@ def add_doctor(current_user):
     if not all([username, password, department, hospital_id]):
         return jsonify({'error': 'Missing required fields (username, password, department, hospital_id)'}), 400
         
-    if User.query.filter_by(username=username).first():
+    from auth import username_exists
+    if username_exists(username):
         return jsonify({'error': 'Username already exists'}), 400
         
-    role = Role.query.filter_by(name='Doctor').first()
-    if not role:
-        return jsonify({'error': 'Doctor role not found'}), 500
-        
-    new_user = User(
-        # type: ignore
-        username=username,
-        # type: ignore
-        email=email,
-        # type: ignore
-        password_hash=generate_password_hash(password),
-        # type: ignore
-        role_id=role.id
-    )
-    db.session.add(new_user)
-    db.session.commit()
-    
     new_doctor = Doctor(
-        # type: ignore
-        user_id=new_user.id,
-        # type: ignore
+        username=username,
+        email=email,
+        password_hash=generate_password_hash(password),
         hospital_id=hospital_id,
-        # type: ignore
-        department=department
+        department=department,
+        specialization=department
     )
     db.session.add(new_doctor)
     db.session.commit()
@@ -225,30 +209,28 @@ def add_district_admin(current_user):
     if not all([username, password, district_id]):
         return jsonify({'error': 'Missing required fields (username, password, district_id)'}), 400
         
-    if User.query.filter_by(username=username).first():
+    from auth import username_exists
+    if username_exists(username):
         return jsonify({'error': 'Username already exists'}), 400
-        
-    role = Role.query.filter_by(name='DistrictAdmin').first()
-    if not role:
-        return jsonify({'error': 'DistrictAdmin role not found'}), 500
         
     # Verify district exists
     district = District.query.get(district_id)
     if not district:
         return jsonify({'error': 'District not found'}), 404
         
-    new_user = User(
+    new_admin_user = Admin(
         username=username,
         email=email,
         phone_number=phone_number,
         password_hash=generate_password_hash(password),
-        role_id=role.id
+        role_level='District',
+        district_id=district_id
     )
-    db.session.add(new_user)
+    db.session.add(new_admin_user)
     db.session.commit()
     
     new_admin = DistrictAdminProfile(
-        user_id=new_user.id,
+        user_id=new_admin_user.id,
         district_id=district_id
     )
     db.session.add(new_admin)

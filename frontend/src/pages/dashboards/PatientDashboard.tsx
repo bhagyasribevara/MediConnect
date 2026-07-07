@@ -98,8 +98,18 @@ export default function PatientDashboard() {
   // EMR filters
   const [searchTerm, setSearchTerm] = useState('');
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const res = await api.get('/auth/me');
+      return res.data;
+    }
+  });
+
+  const patientId = currentUser?.id || 1;
+
   const { data: metrics, isLoading } = useQuery({
-    queryKey: ['patientMetrics'],
+    queryKey: ['patientMetrics', patientId],
     queryFn: async () => {
       const res = await api.get('/dashboard/patient');
       return res.data.metrics;
@@ -191,8 +201,12 @@ export default function PatientDashboard() {
     }
     try {
       const res = await api.post('/appointment/book', {
+<<<<<<< HEAD
+        patient_id: patientId,
+=======
         patient_id: bookingForm.patientId, // Prototype patient id
         patient_name: bookingForm.patientName,
+>>>>>>> af3e6bd19a88f5225505c135cef4c7a43378b022
         slot_id: selectedSlotId
       });
       setIsPaymentOpen(false);

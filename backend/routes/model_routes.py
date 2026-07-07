@@ -35,9 +35,13 @@ def superadmin_required(f):
             return jsonify({"message": "Token is missing"}), 401
 
         try:
-            from models import User
+            from models import Admin
             data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-            user = User.query.get(data["user_id"])
+            role_name = data.get("role")
+            if role_name == "SuperAdmin":
+                user = Admin.query.get(data["user_id"])
+            else:
+                user = None
             if not user or user.role.name != "SuperAdmin":
                 return jsonify({"message": "SuperAdmin access required"}), 403
         except Exception:

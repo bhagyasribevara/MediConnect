@@ -1,7 +1,7 @@
 # pyrefly: ignore [missing-import, unexpected-keyword]
 # pyright: ignore[reportMissingImports, reportCallIssue]
 from flask import Blueprint, request, jsonify
-from models import db, Patient, PatientRecord, User
+from models import db, Patient, PatientRecord
 from dashboard import token_required
 
 patient_bp = Blueprint('patient', __name__)
@@ -10,7 +10,7 @@ patient_bp = Blueprint('patient', __name__)
 @token_required
 def manage_records(current_user):
     # Fetch patient profile
-    patient = Patient.query.filter_by(user_id=current_user.id).first()
+    patient = current_user if current_user.role.name == 'Patient' else None
     
     if request.method == 'GET':
         if not patient and current_user.role.name != 'Doctor':

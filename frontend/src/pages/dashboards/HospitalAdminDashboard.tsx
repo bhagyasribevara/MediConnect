@@ -4,11 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
 import api from '../../services/api';
 import { 
-   
   predictBedOccupancy, 
   getLowStock, 
-  
-  
+  predictHospitalLoad
 } from '../../services/ai_api';
 import './hospital-admin.css'; // Premium Claymorphism UI
 
@@ -33,11 +31,6 @@ export default function HospitalAdminDashboard() {
   const [isAddDoctorModalOpen, setIsAddDoctorModalOpen] = useState(false);
   const [newDoctor, setNewDoctor] = useState({ username: '', email: '', password: '', department: '', hospital_id: 1 });
 
-  
-  
-  
-
-  // Bed Grid array
   // Doctor stats for appointments
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
   const { data: doctorStats = [], isLoading: statsLoading } = useQuery({
@@ -59,11 +52,18 @@ export default function HospitalAdminDashboard() {
   // Sync real-time socket events
   useEffect(() => {
     const socket = io('http://127.0.0.1:5000');
-    socket.on('slot_updated', () => queryClient.invalidateQueries({ queryKey: ['hospitalStats'] }));
-    socket.on('queue_updated', () => queryClient.invalidateQueries({ queryKey: ['hospitalStats'] }));
+    socket.on('slot_updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['hospitalStats'] });
+      queryClient.invalidateQueries({ queryKey: ['ha_appointments'] });
+    });
+    socket.on('queue_updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['hospitalStats'] });
+      queryClient.invalidateQueries({ queryKey: ['ha_appointments'] });
+    });
 
     return () => { socket.disconnect(); };
   }, [queryClient]);
+
   // Fetch Data
   const { data: dashboardData } = useQuery({
     queryKey: ['hospitaladmin_dashboard'],
@@ -103,6 +103,12 @@ export default function HospitalAdminDashboard() {
     enabled: activeTab === 'pharmacy' || activeTab === 'ai_insights'
   });
 
+  useQuery({
+    queryKey: ['ai_hospital_load'],
+    queryFn: async () => (await predictHospitalLoad({ State: 'Maharashtra', District: 'Mumbai', Total_Num_Beds: 300, Number_Doctor: 50 })).data,
+    enabled: activeTab === 'overview' || activeTab === 'ai_insights'
+  });
+
   // Mutations for New Modules
   const updateBedMutation = useMutation({
     mutationFn: ({ id, status }: { id: number, status: string }) => api.put(`/dashboard/hospitaladmin/beds/${id}`, { status }),
@@ -129,11 +135,10 @@ export default function HospitalAdminDashboard() {
     }
   });
 
-  
-
-  
-
-  
+  const handleAddDoctor = (e: React.FormEvent) => {
+    e.preventDefault();
+    addDoctorMutation.mutate(newDoctor);
+  };
 
   const navItems = [
     { id: 'overview', label: 'Hospital Overview', icon: <IconOverview /> },
@@ -193,6 +198,7 @@ export default function HospitalAdminDashboard() {
                 </div>
               ))}
             </div>
+
             {/* Sidebar Footer */}
             <div className="mt-auto pt-6 border-t border-white/20">
               <div className="flex items-center gap-3 mb-4">
@@ -951,7 +957,7 @@ export default function HospitalAdminDashboard() {
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="ha-clay-card w-full max-w-md">
               <h3 className="text-xl font-bold mb-4">Add New Doctor</h3>
-              <form onSubmit={(e) => { e.preventDefault(); addDoctorMutation.mutate(newDoctor); }} className="space-y-4">
+              <form onSubmit={handleAddDoctor} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Username</label>
                   <input type="text" required className="mt-1 w-full p-2 border border-gray-300 rounded-xl"

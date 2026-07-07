@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardLayout from '../../components/DashboardLayout';
 import api from '../../services/api';
-import { getAppointmentLoad, getFootfall, predictDisease } from '../../services/ai_api';
+import { getAppointmentLoad, getFootfall } from '../../services/ai_api';
 import { io } from 'socket.io-client';
 
 import { 
-  AIHealthSummary, DoctorSummary, OPDLoadAndForecast, InsightsAndAlerts, QuickActions, DoctorPerformance 
+  AIHealthSummary, DoctorSummary, OPDLoadAndForecast, InsightsAndAlerts, QuickActions 
 } from '../../components/doctor/DashboardWidgets';
 import { AIPriorityQueue, ConsultationQueue } from '../../components/doctor/PatientQueues';
-import { AIClinicalDecision, MedLensReports, LabReports } from '../../components/doctor/ClinicalSupport';
 import PatientDetailsModal from '../../components/doctor/PatientDetailsModal';
 
 
@@ -105,7 +104,15 @@ export default function DoctorDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const queryClient = useQueryClient();
-  const doctor_id = 1; // Prototype value
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const res = await api.get('/auth/me');
+      return res.data;
+    }
+  });
+
+  const doctor_id = currentUser?.id || 1;
 
   // Queue fetching
   const { data: queue = [], isLoading: isLoadingQueue } = useQuery({

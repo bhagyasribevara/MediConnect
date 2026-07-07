@@ -140,11 +140,15 @@ export default function SuperAdminDashboard() {
   });
 
   // AI models active states
-  const [aiModels] = useState<any[]>([
+  const [aiModels, setAiModels] = useState<any[]>([
     { id: 'gemini-pro', name: 'Gemini 1.5 Pro', latency: '420ms', status: 'Active', tokens: '2.4M / 10M' },
     { id: 'gemini-flash', name: 'Gemini 1.5 Flash', latency: '180ms', status: 'Active', tokens: '5.1M / 20M' },
     { id: 'medlm', name: 'MedLM (Clinical Model)', latency: '650ms', status: 'Inactive', tokens: '0 / 1M' }
   ]);
+
+  const toggleModel = (id: string) => {
+    setAiModels(prev => prev.map(m => m.id === id ? { ...m, status: m.status === 'Active' ? 'Inactive' : 'Active' } : m));
+  };
 
   // Database backups history
   const [backups, setBackups] = useState<any[]>([
@@ -167,7 +171,7 @@ export default function SuperAdminDashboard() {
   });
 
   // Fetch AI Model Status
-  const { data: mlModels, } = useQuery({
+  const { data: mlModels } = useQuery({
     queryKey: ['ml_model_status'],
     queryFn: async () => {
       const res = await getModelStatus();
@@ -832,7 +836,6 @@ export default function SuperAdminDashboard() {
               </div>
             </div>
           )}
-
           {/* ======================================================== */}
           {/* TAB 3: FACILITY & AI MODELS                              */}
           {/* ======================================================== */}
@@ -932,8 +935,7 @@ export default function SuperAdminDashboard() {
 
               {/* Gemini LLM API Status */}
               <div className="p-6 bg-white rounded-2xl shadow-clay border border-accent/30 space-y-6">
-                <h3 className="text-sm font-bold text-dark">Active Generative AI (LLM) Deployments</h3>
-
+                <h3 className="text-base font-extrabold text-dark">Active Gemini API Deployments</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {aiModels.map((model) => (
                     <div key={model.id} className="p-5 border border-accent/25 rounded-2xl bg-accent/20 flex flex-col justify-between space-y-4">
@@ -944,17 +946,20 @@ export default function SuperAdminDashboard() {
                         </div>
                         <div className="mt-4 text-xs space-y-2">
                           <div className="flex justify-between">
-                            <span className="text-secondary/60 font-bold">API Latency</span>
-                            <span className="text-dark font-medium">{model.latency}</span>
+                            <span className="text-secondary/75 font-semibold">Response Latency</span>
+                            <span className="font-bold">{model.latency}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-secondary/60 font-bold">Tokens Used</span>
-                            <span className="text-dark font-medium">{model.tokens}</span>
+                            <span className="text-secondary/75 font-semibold">Token Limit quota</span>
+                            <span className="font-bold">{model.tokens}</span>
                           </div>
                         </div>
                       </div>
-                      <button className="w-full py-2 bg-white text-secondary font-bold text-[10px] uppercase rounded-xl border border-accent/30 hover:bg-secondary hover:text-white transition-all shadow-sm">
-                        View Analytics
+                      <button 
+                        onClick={() => toggleModel(model.id)}
+                        className={`w-full py-1.5 text-xs font-bold rounded-lg transition-colors ${model.status === 'Active' ? 'bg-red-500 text-white hover:bg-red-650' : 'bg-secondary text-white hover:bg-[#00a892]'}`}
+                      >
+                        {model.status === 'Active' ? 'Disable Model' : 'Enable Model'}
                       </button>
                     </div>
                   ))}

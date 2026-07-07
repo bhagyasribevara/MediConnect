@@ -18,7 +18,7 @@ import re
 import json
 import time
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -42,6 +42,7 @@ try:
     import lightgbm as lgb
     HAS_LIGHTGBM = True
 except ImportError:
+    lgb = None
     HAS_LIGHTGBM = False
 
 logger = logging.getLogger("mediconnect.ml_pipeline")
@@ -106,6 +107,24 @@ class DatasetAnalyzer:
             raise ValueError(f"Could not find JSON array in {filepath}")
 
         json_str = match.group(0)
+<<<<<<< HEAD
+        # Strip comment lines
+        json_str = re.sub(r"(?m)^\s*//.*$", "", json_str)
+
+        # Clean JS → JSON: remove trailing commas
+        json_str = re.sub(r",\s*([\]}])", r"\1", json_str)
+        
+        # Convert single-quoted string literals to double-quoted, leaving internal apostrophes intact
+        def to_double_quotes(m):
+            s = m.group(1)
+            s = s.replace('"', '\\"')
+            s = s.replace("\\'", "'")
+            return f'"{s}"'
+        json_str = re.sub(r"'([^'\n\\]*(?:\\.[^\n'\\]*)*)'", to_double_quotes, json_str)
+        
+        # Add quotes to unquoted keys (only at the start of lines!)
+        json_str = re.sub(r'(?m)^(\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', json_str)
+=======
         # Clean JS → JSON: remove trailing commas
         json_str = re.sub(r",\s*([\]}])", r"\1", json_str)
         
@@ -120,6 +139,7 @@ class DatasetAnalyzer:
         json_str = json_str.strip()
         if json_str.endswith(';'):
             json_str = json_str[:-1]
+>>>>>>> 957867e2cfaba2a5825914768c205c7789518894
 
         data = json.loads(json_str, strict=False)
         return pd.DataFrame(data)
@@ -131,9 +151,9 @@ class DatasetAnalyzer:
         for col in df.columns:
             info[col] = {
                 "dtype": str(df[col].dtype),
-                "missing": int(df[col].isnull().sum()),
+                "missing": int(cast(Any, df[col].isnull().sum())),
                 "missing_pct": round(df[col].isnull().mean() * 100, 2),
-                "unique": int(df[col].nunique()),
+                "unique": int(cast(Any, df[col].nunique())),
                 "sample_values": df[col].dropna().head(3).tolist(),
             }
         return info
@@ -158,7 +178,7 @@ class DatasetAnalyzer:
         # Fallback: last column with few unique values (likely a label)
         for col in reversed(df.columns):
             if df[col].nunique() < 50 and df[col].dtype == "object":
-                return col
+                return str(col)
 
         return None
 
@@ -253,8 +273,8 @@ class DataCleaner:
         X = df.drop(columns=[target_col])
 
         # 4. Identify column types
-        self.numeric_cols = X.select_dtypes(include=[np.number]).columns.tolist()
-        self.categorical_cols = X.select_dtypes(include=["object", "bool"]).columns.tolist()
+        self.numeric_cols = X.select_dtypes(include="number").columns.tolist()
+        self.categorical_cols = X.select_dtypes(include=cast(Any, ["object", "bool"])).columns.tolist()
 
         # 5. Handle missing values
         for col in self.numeric_cols:
@@ -279,7 +299,7 @@ class DataCleaner:
             self.scaler = StandardScaler()
             X[self.numeric_cols] = self.scaler.fit_transform(X[self.numeric_cols])
 
-        return X, y
+        return X, cast(pd.Series, y)
 
     def transform_input(self, input_data: Dict[str, Any], feature_columns: List[str]) -> pd.DataFrame:
         """Transform a single prediction input using fitted encoders/scalers."""
@@ -365,14 +385,14 @@ class ModelTrainer:
             model_pool = self.REGRESSION_MODELS.copy()
 
         # Add LightGBM if available
-        if HAS_LIGHTGBM and "LightGBM" not in model_pool:
+        if lgb is not None and "LightGBM" not in model_pool:
             if self.task_type == "classification":
-                model_pool["LightGBM"] = lambda: lgb.LGBMClassifier(
+                model_pool["LightGBM"] = lambda: cast(Any, lgb).LGBMClassifier(
                     n_estimators=100, max_depth=6, learning_rate=0.1,
                     random_state=42, verbose=-1,
                 )
             else:
-                model_pool["LightGBM"] = lambda: lgb.LGBMRegressor(
+                model_pool["LightGBM"] = lambda: cast(Any, lgb).LGBMRegressor(
                     n_estimators=100, max_depth=6, learning_rate=0.1,
                     random_state=42, verbose=-1,
                 )
@@ -461,9 +481,9 @@ class ModelTrainer:
         avg = "weighted" if len(np.unique(y_true)) > 2 else "binary"
         return {
             "accuracy": round(float(accuracy_score(y_true, y_pred)), 4),
-            "precision": round(float(precision_score(y_true, y_pred, average=avg, zero_division=0)), 4),
-            "recall": round(float(recall_score(y_true, y_pred, average=avg, zero_division=0)), 4),
-            "f1_score": round(float(f1_score(y_true, y_pred, average=avg, zero_division=0)), 4),
+            "precision": round(float(precision_score(y_true, y_pred, average=avg, zero_division=cast(Any, 0))), 4),
+            "recall": round(float(recall_score(y_true, y_pred, average=avg, zero_division=cast(Any, 0))), 4),
+            "f1_score": round(float(f1_score(y_true, y_pred, average=avg, zero_division=cast(Any, 0))), 4),
         }
 
     @staticmethod

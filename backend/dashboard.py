@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request, current_app
 from functools import wraps
 import jwt
-from models import db, User, Role, Hospital, Bed, Doctor, LeaveRequest, DoctorShift, DoctorAttendance, ShiftQueue, PatientRecord, DistrictAdminProfile, District
+from models import db, Patient, Doctor, Admin, Hospital, Bed, LeaveRequest, DoctorShift, DoctorAttendance, ShiftQueue, PatientRecord, DistrictAdminProfile, District, Appointment, Slot
 from datetime import date
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -18,7 +18,16 @@ def token_required(f):
             
         try:
             data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-            current_user = User.query.get(data['user_id'])
+            role_name = data.get('role')
+            if role_name == 'Patient':
+                current_user = Patient.query.get(data['user_id'])
+            elif role_name == 'Doctor':
+                current_user = Doctor.query.get(data['user_id'])
+            elif role_name in ['HospitalAdmin', 'DistrictAdmin', 'SuperAdmin']:
+                current_user = Admin.query.get(data['user_id'])
+            else:
+                current_user = None
+                
             if not current_user:
                 raise Exception("User not found")
         except Exception as e:
@@ -33,11 +42,19 @@ def patient_dashboard(current_user):
     if current_user.role.name != 'Patient':
         return jsonify({'message': 'Unauthorized'}), 403
         
+    upcoming_appointments = Appointment.query.filter(
+        Appointment.patient_id == current_user.id,
+        Appointment.appointment_status.in_(['Booked', 'Rescheduled'])
+    ).count()
+    
+    recent_reports = PatientRecord.query.filter_by(patient_id=current_user.id).count()
+    
     return jsonify({
         'metrics': {
-            'appointments': 2,
-            'prescriptions': 5,
-            'recent_activity': 'Booked General Consultation'
+            'upcoming_appointments': upcoming_appointments,
+            'recent_reports': recent_reports,
+            'appointments': upcoming_appointments,
+            'prescriptions': PatientRecord.query.filter_by(patient_id=current_user.id, record_type='Prescription').count()
         }
     }), 200
 
@@ -47,13 +64,21 @@ def doctor_dashboard(current_user):
     if current_user.role.name != 'Doctor':
         return jsonify({'message': 'Unauthorized'}), 403
         
+    todays_appointments = Appointment.query.join(Slot).filter(
+        Appointment.doctor_id == current_user.id,
+        Slot.date == date.today()
+    ).count()
+    
+    pending_reports = PatientRecord.query.count() # default count of reports as mock/indicator
+    
     return jsonify({
         'metrics': {
-            'todays_appointments': 8,
-            'pending_reports': 3,
+            'todays_appointments': todays_appointments,
+            'pending_reports': pending_reports,
             'ai_insights': 'High number of seasonal flu cases detected.'
         }
     }), 200
+
 
 @dashboard_bp.route('/hospitaladmin', methods=['GET'])
 @token_required
@@ -125,7 +150,7 @@ def superadmin_dashboard(current_user):
     if current_user.role.name != 'SuperAdmin':
         return jsonify({'message': 'Unauthorized'}), 403
         
-    total_users = User.query.count()
+    total_users = Patient.query.count() + Doctor.query.count() + Admin.query.count()
     
     return jsonify({
         'metrics': {
@@ -145,7 +170,7 @@ def get_leave_requests(current_user):
         return jsonify({'message': 'Unauthorized'}), 403
     
     status_filter = request.args.get('status', None)
-    query = LeaveRequest.query.join(Doctor).join(User, Doctor.user_id == User.id)
+    query = LeaveRequest.query.join(Doctor)
     
     if status_filter:
         query = query.filter(LeaveRequest.status == status_filter)

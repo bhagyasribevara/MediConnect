@@ -99,13 +99,15 @@ if __name__ == '__main__':
         db.create_all()
 
     # Initialize ML models in background thread (non-blocking)
-    ml_thread = threading.Thread(
-        target=_initialize_ml_models,
-        args=(app,),
-        daemon=True,
-    )
-    ml_thread.start()
-    logger.info("ML model initialization started in background...")
+    # Check WERKZEUG_RUN_MAIN to prevent duplicate threads during reload in debug mode
+    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        ml_thread = threading.Thread(
+            target=_initialize_ml_models,
+            args=(app,),
+            daemon=True,
+        )
+        ml_thread.start()
+        logger.info("ML model initialization started in background...")
 
     # Use socketio.run with allow_unsafe_werkzeug for development
     socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)

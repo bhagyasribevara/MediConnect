@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timezone, date
 from flask import Blueprint, request, jsonify, send_from_directory, current_app
 from werkzeug.utils import secure_filename
-from models import db, User, Doctor, DoctorShift, ShiftQueue, LeaveRequest, DoctorAttendance
+from models import db, Doctor, DoctorShift, ShiftQueue, LeaveRequest, DoctorAttendance
 from dashboard import token_required
 
 doctor_mgmt_bp = Blueprint('doctor_mgmt', __name__)
@@ -20,7 +20,7 @@ def allowed_file(filename):
 @doctor_mgmt_bp.route('/shifts', methods=['GET'])
 @token_required
 def get_shifts(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -53,7 +53,7 @@ def get_shifts(current_user):
 @doctor_mgmt_bp.route('/shifts', methods=['POST'])
 @token_required
 def create_shift(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -84,7 +84,7 @@ def create_shift(current_user):
 @doctor_mgmt_bp.route('/shifts/<int:shift_id>', methods=['PUT'])
 @token_required
 def update_shift(current_user, shift_id):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -109,7 +109,7 @@ def update_shift(current_user, shift_id):
 @doctor_mgmt_bp.route('/shifts/<int:shift_id>', methods=['DELETE'])
 @token_required
 def delete_shift(current_user, shift_id):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -206,7 +206,7 @@ def call_next(current_user, shift_id):
 @doctor_mgmt_bp.route('/profile/photo', methods=['POST'])
 @token_required
 def upload_photo(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -246,7 +246,7 @@ def get_photo(doctor_id):
 @doctor_mgmt_bp.route('/profile', methods=['GET'])
 @token_required
 def get_profile(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -266,7 +266,7 @@ def get_profile(current_user):
 @doctor_mgmt_bp.route('/attendance/punch-in', methods=['POST'])
 @token_required
 def punch_in(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -300,7 +300,7 @@ def punch_in(current_user):
 @doctor_mgmt_bp.route('/attendance/punch-out', methods=['POST'])
 @token_required
 def punch_out(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -322,7 +322,7 @@ def punch_out(current_user):
 @doctor_mgmt_bp.route('/attendance', methods=['GET'])
 @token_required
 def get_attendance(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -340,7 +340,7 @@ def get_attendance(current_user):
 @doctor_mgmt_bp.route('/attendance/today', methods=['GET'])
 @token_required
 def get_today_attendance(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -362,7 +362,7 @@ def get_today_attendance(current_user):
 @doctor_mgmt_bp.route('/leave', methods=['POST'])
 @token_required
 def submit_leave(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     
@@ -391,7 +391,7 @@ def submit_leave(current_user):
 @doctor_mgmt_bp.route('/leave', methods=['GET'])
 @token_required
 def get_leaves(current_user):
-    doctor = Doctor.query.filter_by(user_id=current_user.id).first()
+    doctor = current_user if current_user.role.name == 'Doctor' else None
     if not doctor:
         return jsonify({'error': 'Doctor profile not found'}), 404
     

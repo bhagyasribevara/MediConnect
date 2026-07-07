@@ -72,7 +72,7 @@ def upload_report(current_user):
         # Optionally save to database if requested
         save = data.get('save_to_record', False)
         if save:
-            patient = Patient.query.filter_by(user_id=current_user.id).first()
+            patient = current_user if current_user.role.name == 'Patient' else None
             if patient:
                 record = PatientRecord(
                     # pyrefly: ignore [unexpected-keyword]

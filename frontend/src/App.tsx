@@ -1,5 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
+import PatientLogin from './pages/PatientLogin';
+import PatientSignup from './pages/PatientSignup';
+import DoctorLogin from './pages/DoctorLogin';
+import DoctorSignup from './pages/DoctorSignup';
+import AdminLogin from './pages/AdminLogin';
+import OAuthCallback from './pages/OAuthCallback';
 import { 
   PatientDashboard, 
   DoctorDashboard, 
@@ -8,17 +13,34 @@ import {
   SuperAdminDashboard 
 } from './pages/Dashboards';
 
-// A simple protective route component
+// A protective route component with portal-specific redirects
 function ProtectedRoute({ children, allowedRole }: { children: React.ReactNode, allowedRole: string }) {
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role');
 
   if (!token) {
-    return <Navigate to="/login" replace />;
+    if (allowedRole === 'Doctor') {
+      return <Navigate to="/doclogin" replace />;
+    } else if (allowedRole === 'Patient') {
+      return <Navigate to="/login" replace />;
+    } else {
+      return <Navigate to="/adminlogin" replace />;
+    }
   }
 
-  // Very basic role check for prototype
+  // Role validation
   if (role !== allowedRole) {
+    if (role === 'Doctor') {
+      return <Navigate to="/doctor-dashboard" replace />;
+    } else if (role === 'Patient') {
+      return <Navigate to="/patient-dashboard" replace />;
+    } else if (role === 'HospitalAdmin') {
+      return <Navigate to="/hospitaladmin-dashboard" replace />;
+    } else if (role === 'DistrictAdmin') {
+      return <Navigate to="/districtadmin-dashboard" replace />;
+    } else if (role === 'SuperAdmin') {
+      return <Navigate to="/superadmin-dashboard" replace />;
+    }
     return <Navigate to="/login" replace />;
   }
 
@@ -29,8 +51,14 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Isolated Path-based Login and Signup routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<PatientLogin />} />
+        <Route path="/signup" element={<PatientSignup />} />
+        <Route path="/doclogin" element={<DoctorLogin />} />
+        <Route path="/docsignup" element={<DoctorSignup />} />
+        <Route path="/adminlogin" element={<AdminLogin />} />
+        <Route path="/oauth-callback" element={<OAuthCallback />} />
         
         {/* Dashboards based on role */}
         <Route 

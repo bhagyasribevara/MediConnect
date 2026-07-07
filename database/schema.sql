@@ -1,28 +1,4 @@
--- MediConnect Initial Database Schema
-
-CREATE TABLE IF NOT EXISTS roles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
-);
-
-INSERT IGNORE INTO roles (name) VALUES 
-('Patient'), ('Doctor'), ('HospitalAdmin'), ('DistrictAdmin'), ('SuperAdmin');
-
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    role_id INT NOT NULL,
-    phone_number VARCHAR(15), -- For OTP
-    failed_login_attempts INT DEFAULT 0, -- For rate limiting
-    lockout_until DATETIME DEFAULT NULL, -- For rate limiting
-    reset_otp VARCHAR(6) DEFAULT NULL, -- For forgot password OTP
-    reset_otp_expires DATETIME DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    soft_delete BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (role_id) REFERENCES roles(id)
-);
+-- MediConnect Initial Database Schema (Refactored for isolated authentication)
 
 CREATE TABLE IF NOT EXISTS districts (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -41,21 +17,70 @@ CREATE TABLE IF NOT EXISTS hospitals (
     FOREIGN KEY (district_id) REFERENCES districts(id)
 );
 
+CREATE TABLE IF NOT EXISTS patients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(15), -- For Mobile Number
+    failed_login_attempts INT DEFAULT 0,
+    lockout_until DATETIME DEFAULT NULL,
+    reset_otp VARCHAR(6) DEFAULT NULL,
+    reset_otp_expires DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    soft_delete BOOLEAN DEFAULT FALSE,
+    emergency_contact VARCHAR(15),
+    blood_group ENUM('A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-')
+);
+
 CREATE TABLE IF NOT EXISTS doctors (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL UNIQUE,
-    hospital_id INT NOT NULL,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(15),
+    failed_login_attempts INT DEFAULT 0,
+    lockout_until DATETIME DEFAULT NULL,
+    reset_otp VARCHAR(6) DEFAULT NULL,
+    reset_otp_expires DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    soft_delete BOOLEAN DEFAULT FALSE,
+    hospital_id INT DEFAULT NULL, -- Nullable to allow self-signup
     specialization VARCHAR(100) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id),
+    department VARCHAR(100) NOT NULL,
+    is_on_leave BOOLEAN DEFAULT FALSE,
+    profile_photo VARCHAR(255) DEFAULT NULL,
     FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
 );
 
-CREATE TABLE IF NOT EXISTS patients (
+CREATE TABLE IF NOT EXISTS admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(15),
+    role_level ENUM('Hospital', 'District', 'Super') NOT NULL,
+    hospital_id INT DEFAULT NULL,
+    district_id INT DEFAULT NULL,
+    failed_login_attempts INT DEFAULT 0,
+    lockout_until DATETIME DEFAULT NULL,
+    reset_otp VARCHAR(6) DEFAULT NULL,
+    reset_otp_expires DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    soft_delete BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (hospital_id) REFERENCES hospitals(id),
+    FOREIGN KEY (district_id) REFERENCES districts(id)
+);
+
+CREATE TABLE IF NOT EXISTS district_admins (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL UNIQUE,
-    emergency_contact VARCHAR(15),
-    blood_group ENUM('A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    district_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES admins(id),
+    FOREIGN KEY (district_id) REFERENCES districts(id)
 );
 
 CREATE TABLE IF NOT EXISTS appointments (
@@ -71,7 +96,7 @@ CREATE TABLE IF NOT EXISTS appointments (
     FOREIGN KEY (hospital_id) REFERENCES hospitals(id)
 );
 
--- New requirement: ICU beds for emergency (pregnancy, etc.)
+-- ICU beds for emergency (pregnancy, etc.)
 CREATE TABLE IF NOT EXISTS beds (
     id INT AUTO_INCREMENT PRIMARY KEY,
     hospital_id INT NOT NULL,
@@ -95,10 +120,7 @@ CREATE TABLE IF NOT EXISTS bed_bookings (
     FOREIGN KEY (bed_id) REFERENCES beds(id)
 );
 
--- ═══════════════════════════════════════════════════════════════
 -- AI/ML Tables — Prediction Logs, Model Metadata, Training Logs
--- ═══════════════════════════════════════════════════════════════
-
 CREATE TABLE IF NOT EXISTS prediction_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     model_name VARCHAR(100) NOT NULL,
@@ -106,9 +128,8 @@ CREATE TABLE IF NOT EXISTS prediction_logs (
     prediction VARCHAR(255),
     confidence FLOAT DEFAULT 0.0,
     dashboard VARCHAR(100),
-    user_id INT DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    user_id INT DEFAULT NULL, -- generic id
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS model_metadata (
