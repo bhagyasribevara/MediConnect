@@ -95,7 +95,21 @@ export function AIPriorityQueue({ onPatientClick }: { onPatientClick?: (patient:
 // SECTION 7: Patient Consultation Queue
 export function ConsultationQueue({ queue = [], updateQueueStatus, onPatientClick }: { queue: any[], updateQueueStatus?: (id: number, status: string) => void, onPatientClick?: (patient: any) => void }) {
   
-  const mockQueue = queue.length > 0 ? queue : [
+  const normalizedQueue = queue.length > 0 ? queue.map((item: any) => ({
+    queue_id: item.queue_id || item.id || Math.random(),
+    appointment: item.appointment || {
+      id: item.appointment_id,
+      token_number: item.queue_number ? `A-${item.queue_number}` : 'N/A',
+      patient: { 
+        full_name: item.patient_name || 'Unknown', 
+        age: 30, 
+        gender: 'Unknown' 
+      },
+      symptoms: item.symptoms || 'Not specified',
+      priority: 'Normal',
+      status: (item.status || 'waiting').toLowerCase().replace(' ', '_')
+    }
+  })) : [
     { queue_id: 101, appointment: { id: 1, token_number: 'A-01', patient: { full_name: 'Robert Fox', age: 45, gender: 'Male' }, symptoms: 'Back pain, fever', priority: 'Normal', appointment_date: '2026-07-05T10:00:00Z', status: 'waiting' } },
     { queue_id: 102, appointment: { id: 2, token_number: 'A-02', patient: { full_name: 'Jane Cooper', age: 32, gender: 'Female' }, symptoms: 'Migraine', priority: 'High', appointment_date: '2026-07-05T10:15:00Z', status: 'in_progress' } },
   ];
@@ -126,7 +140,7 @@ export function ConsultationQueue({ queue = [], updateQueueStatus, onPatientClic
             </tr>
           </thead>
           <tbody>
-            {mockQueue.map((item) => (
+            {normalizedQueue.map((item) => (
               <tr key={item.queue_id} className="border-b border-accent/10 hover:bg-accent/5 transition-colors group">
                 <td className="py-4 px-4 font-bold text-primary">{item.appointment.token_number}</td>
                 <td className="py-4 px-4 cursor-pointer" onClick={() => onPatientClick && onPatientClick(item.appointment.patient)}>

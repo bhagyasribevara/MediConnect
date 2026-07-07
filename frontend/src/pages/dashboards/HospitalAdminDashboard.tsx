@@ -332,13 +332,7 @@ export default function HospitalAdminDashboard() {
                     </div>
                     <div className="flex-1 -ml-4">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart layout="vertical" data={[
-                          { name: 'Emergency', Occupied: 4, Available: 3 },
-                          { name: 'Maternity', Occupied: 10, Available: 7 },
-                          { name: 'Pediatric', Occupied: 30, Available: 8 },
-                          { name: 'ICU', Occupied: 30, Available: 2 },
-                          { name: 'General Ward', Occupied: 60, Available: 20 },
-                        ]} margin={{ top: 0, right: 20, left: 30, bottom: 0 }}>
+                        <BarChart layout="vertical" data={[]} margin={{ top: 0, right: 20, left: 30, bottom: 0 }}>
                           <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} stroke="#f3f4f6" />
                           <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#9ca3af'}} />
                           <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#6b7280'}} width={70} />
@@ -372,40 +366,9 @@ export default function HospitalAdminDashboard() {
                       <div className="font-bold text-xs text-gray-700">Critical Alerts</div>
                       <a href="#" className="text-[10px] text-[#14C8B4] font-bold hover:underline">View All</a>
                     </div>
-                    <div className="flex-1 overflow-y-auto space-y-3.5 pr-2 custom-scrollbar">
-                      <div className="flex gap-3 items-start">
-                        <div className="w-8 h-8 rounded-xl bg-red-100 text-red-500 flex items-center justify-center shrink-0 shadow-sm">!</div>
-                        <div>
-                          <div className="text-xs font-bold text-gray-800">ICU Bed Shortage</div>
-                          <div className="text-[10px] text-gray-500 font-medium">Only 2 ICU beds are available</div>
-                          <div className="text-[9px] text-gray-400 mt-0.5">10 mins ago</div>
-                        </div>
+                      <div className="flex-1 overflow-y-auto space-y-3.5 pr-2 custom-scrollbar flex items-center justify-center">
+                        <span className="text-xs text-gray-400">No Data Available</span>
                       </div>
-                      <div className="flex gap-3 items-start">
-                        <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center shrink-0 shadow-sm"><IconPharmacy /></div>
-                        <div>
-                          <div className="text-xs font-bold text-gray-800">Medicine Low Stock</div>
-                          <div className="text-[10px] text-gray-500 font-medium">Paracetamol stock less than 50 units</div>
-                          <div className="text-[9px] text-gray-400 mt-0.5">25 mins ago</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-3 items-start">
-                        <div className="w-8 h-8 rounded-xl bg-yellow-100 text-yellow-600 flex items-center justify-center shrink-0 shadow-sm"><IconLab /></div>
-                        <div>
-                          <div className="text-xs font-bold text-gray-800">Lab Equipment Service</div>
-                          <div className="text-[10px] text-gray-500 font-medium">X-Ray Machine maintenance due</div>
-                          <div className="text-[9px] text-gray-400 mt-0.5">1 hour ago</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-3 items-start">
-                        <div className="w-8 h-8 rounded-xl bg-green-100 text-green-500 flex items-center justify-center shrink-0 shadow-sm"><IconEmergency /></div>
-                        <div>
-                          <div className="text-xs font-bold text-gray-800">Emergency Case</div>
-                          <div className="text-[10px] text-gray-500 font-medium">New emergency case admitted</div>
-                          <div className="text-[9px] text-gray-400 mt-0.5">1 hour ago</div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -417,35 +380,8 @@ export default function HospitalAdminDashboard() {
                       <div className="font-bold text-xs text-gray-700">Recent Appointments</div>
                       <a href="#" className="text-[10px] text-[#14C8B4] font-bold hover:underline">View All</a>
                     </div>
-                    <div className="flex-1 overflow-y-auto space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden shrink-0"><img src="https://i.pravatar.cc/100?img=11" alt="avatar" /></div>
-                          <div><div className="text-xs font-bold text-gray-800">Rohan Sen</div><div className="text-[9px] text-gray-500 font-medium">OPD - Dr. Demo</div></div>
-                        </div>
-                        <div className="text-right"><div className="text-[9px] text-gray-500 font-bold mb-1">09:30 AM</div><span className="ha-badge success !text-[9px] !py-0.5">Completed</span></div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden shrink-0"><img src="https://i.pravatar.cc/100?img=5" alt="avatar" /></div>
-                          <div><div className="text-xs font-bold text-gray-800">Priya Sharma</div><div className="text-[9px] text-gray-500 font-medium">OPD - Dr. Neha</div></div>
-                        </div>
-                        <div className="text-right"><div className="text-[9px] text-gray-500 font-bold mb-1">10:15 AM</div><span className="ha-badge warning !text-[9px] !py-0.5 !text-blue-500 !bg-blue-50">In Progress</span></div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden shrink-0"><img src="https://i.pravatar.cc/100?img=12" alt="avatar" /></div>
-                          <div><div className="text-xs font-bold text-gray-800">Anil Kumar</div><div className="text-[9px] text-gray-500 font-medium">Consultation</div></div>
-                        </div>
-                        <div className="text-right"><div className="text-[9px] text-gray-500 font-bold mb-1">11:00 AM</div><span className="ha-badge warning !text-[9px] !py-0.5 !text-blue-500 !bg-blue-50">Upcoming</span></div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden shrink-0"><img src="https://i.pravatar.cc/100?img=9" alt="avatar" /></div>
-                          <div><div className="text-xs font-bold text-gray-800">Neha Patel</div><div className="text-[9px] text-gray-500 font-medium">Follow-up</div></div>
-                        </div>
-                        <div className="text-right"><div className="text-[9px] text-gray-500 font-bold mb-1">11:45 AM</div><span className="ha-badge warning !text-[9px] !py-0.5 !text-blue-500 !bg-blue-50">Upcoming</span></div>
-                      </div>
+                    <div className="flex-1 overflow-y-auto space-y-4 flex items-center justify-center">
+                      <span className="text-xs text-gray-400">No Data Available</span>
                     </div>
                   </div>
 
@@ -464,11 +400,7 @@ export default function HospitalAdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="text-[10px] font-bold text-gray-700">
-                        <tr><td className="py-2.5">Paracetamol 500mg</td><td className="py-2.5 text-center">45</td><td className="py-2.5 text-right"><span className="text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Low Stock</span></td></tr>
-                        <tr><td className="py-2.5">ORS Sachets</td><td className="py-2.5 text-center">120</td><td className="py-2.5 text-right"><span className="text-green-500 bg-green-50 px-2 py-0.5 rounded">Good</span></td></tr>
-                        <tr><td className="py-2.5">Amoxicillin 250mg</td><td className="py-2.5 text-center">80</td><td className="py-2.5 text-right"><span className="text-green-500 bg-green-50 px-2 py-0.5 rounded">Good</span></td></tr>
-                        <tr><td className="py-2.5">Azithromycin 500mg</td><td className="py-2.5 text-center">30</td><td className="py-2.5 text-right"><span className="text-orange-500 bg-orange-50 px-2 py-0.5 rounded">Low Stock</span></td></tr>
-                        <tr><td className="py-2.5">Dolo 650mg</td><td className="py-2.5 text-center">200</td><td className="py-2.5 text-right"><span className="text-green-500 bg-green-50 px-2 py-0.5 rounded">Good</span></td></tr>
+                        <tr><td colSpan={3} className="text-center py-6 text-gray-400">No Data Available</td></tr>
                       </tbody>
                     </table>
                   </div>
@@ -501,15 +433,7 @@ export default function HospitalAdminDashboard() {
                     </div>
                     <div className="flex-1 mt-4 -ml-4 -mb-2">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={[
-                          {name: 'Mon', uv: 2000},
-                          {name: 'Tue', uv: 3000},
-                          {name: 'Wed', uv: 2000},
-                          {name: 'Thu', uv: 2780},
-                          {name: 'Fri', uv: 1890},
-                          {name: 'Sat', uv: 2390},
-                          {name: 'Sun', uv: 3490},
-                        ]} margin={{top:5, right:20, bottom:0, left:0}}>
+                        <LineChart data={[]} margin={{top:5, right:20, bottom:0, left:0}}>
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fill: '#9ca3af'}} />
                           <Tooltip cursor={false} contentStyle={{borderRadius:'8px', border:'none', boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}} />
                           <Line type="monotone" dataKey="uv" stroke="#14C8B4" strokeWidth={2.5} dot={{fill: '#14C8B4', strokeWidth: 2, r: 3}} activeDot={{r: 5}} />
@@ -784,28 +708,8 @@ export default function HospitalAdminDashboard() {
                   <div className="ha-badge danger">CODE RED READY</div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Mocked Emergency Case 1 */}
-                  <div className="ha-clay-card border-l-4 border-l-red-500 bg-red-50/30">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-bold text-red-700 text-lg">Ambulance ETA: 4 mins</div>
-                      <span className="ha-badge danger">Trauma</span>
-                    </div>
-                    <p className="text-gray-700 font-medium">Male, 34. Severe head injury from RTA.</p>
-                    <div className="mt-4 flex gap-2">
-                      <button className="ha-btn bg-red-600 text-white hover:bg-red-700 w-full py-2">Prepare Trauma ICU</button>
-                      <button className="ha-btn bg-white text-red-600 border border-red-200 w-full py-2">Page Neuro On-Call</button>
-                    </div>
-                  </div>
-                  {/* Mocked Emergency Case 2 */}
-                  <div className="ha-clay-card border-l-4 border-l-orange-500 bg-orange-50/30">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="font-bold text-orange-700 text-lg">Walk-in Triage</div>
-                      <span className="ha-badge warning">Cardiac</span>
-                    </div>
-                    <p className="text-gray-700 font-medium">Female, 62. Chest pain, radiating to left arm.</p>
-                    <div className="mt-4 flex gap-2">
-                      <button className="ha-btn bg-orange-500 text-white hover:bg-orange-600 w-full py-2">ECG Ordered</button>
-                    </div>
+                  <div className="ha-clay-card flex items-center justify-center py-10 col-span-1 md:col-span-2">
+                    <span className="text-gray-400 font-bold">No Active Emergencies</span>
                   </div>
                 </div>
               </div>
@@ -820,10 +724,7 @@ export default function HospitalAdminDashboard() {
                     <h4 className="font-bold text-gray-700 mb-4">Patient Intake Trends</h4>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={[
-                          { name: 'Mon', count: 45 }, { name: 'Tue', count: 52 }, { name: 'Wed', count: 38 },
-                          { name: 'Thu', count: 65 }, { name: 'Fri', count: 48 }, { name: 'Sat', count: 80 }, { name: 'Sun', count: 72 }
-                        ]}>
+                        <AreaChart data={[]}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF'}} />
                           <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF'}} />
@@ -837,10 +738,7 @@ export default function HospitalAdminDashboard() {
                     <h4 className="font-bold text-gray-700 mb-4">Department Load</h4>
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={[
-                          { name: 'Cardiology', count: 40 }, { name: 'Neurology', count: 25 }, 
-                          { name: 'Pediatrics', count: 60 }, { name: 'General', count: 110 }
-                        ]}>
+                        <BarChart data={[]}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF'}} />
                           <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF'}} />

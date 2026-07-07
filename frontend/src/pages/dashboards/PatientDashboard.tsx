@@ -68,7 +68,7 @@ export default function PatientDashboard() {
   const [isLensLoading, setIsLensLoading] = useState(false);
 
   // Appointment states
-  const [bookingForm, setBookingForm] = useState({ hospital: '1', doctor: '1', date: new Date().toISOString().split('T')[0], time: '', reason: '' });
+  const [bookingForm, setBookingForm] = useState({ hospital: '1', doctor: '1', date: new Date().toISOString().split('T')[0], time: '', reason: '', patientId: 1, patientName: 'Guest Patient' });
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [queueState, setQueueState] = useState<any>(null);
@@ -176,13 +176,23 @@ export default function PatientDashboard() {
   // Appointment Submission
   const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedSlotId) {
+      alert("Please select a live slot before proceeding.");
+      return;
+    }
     setIsPaymentOpen(true);
   };
 
   const handleConfirmPayment = async () => {
+    if (!selectedSlotId) {
+      alert("Please select a live slot before proceeding.");
+      setIsPaymentOpen(false);
+      return;
+    }
     try {
       const res = await api.post('/appointment/book', {
-        patient_id: 1, // Prototype patient id
+        patient_id: bookingForm.patientId, // Prototype patient id
+        patient_name: bookingForm.patientName,
         slot_id: selectedSlotId
       });
       setIsPaymentOpen(false);
@@ -512,9 +522,9 @@ export default function PatientDashboard() {
                       onChange={(e) => setBookingForm({...bookingForm, hospital: e.target.value})}
                       className="w-full text-xs px-3 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-secondary"
                     >
-                      <option>City General Hospital</option>
-                      <option>Saint Jude's Specialist</option>
-                      <option>Community Health Center Block B</option>
+                      <option value="1">City General Hospital</option>
+                      <option value="2">Saint Jude's Specialist</option>
+                      <option value="3">Community Health Center Block B</option>
                     </select>
                   </div>
                   <div>
@@ -541,6 +551,28 @@ export default function PatientDashboard() {
                       className="w-full text-xs px-3 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-secondary"
                       required
                     />
+                  </div>
+                  <div className="col-span-2 grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <label className="block text-xs text-secondary/80 font-bold mb-1">Patient ID (Testing)</label>
+                      <input 
+                        type="number"
+                        value={bookingForm.patientId}
+                        onChange={(e) => setBookingForm({...bookingForm, patientId: parseInt(e.target.value) || 1})}
+                        className="w-full text-xs px-3 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-secondary"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-secondary/80 font-bold mb-1">Patient Name</label>
+                      <input 
+                        type="text"
+                        value={bookingForm.patientName}
+                        onChange={(e) => setBookingForm({...bookingForm, patientName: e.target.value})}
+                        className="w-full text-xs px-3 py-2 border rounded-xl bg-white outline-none focus:ring-2 focus:ring-secondary"
+                        required
+                      />
+                    </div>
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs text-secondary/80 font-bold mb-1">Live Appointment Slots</label>
@@ -751,11 +783,7 @@ export default function PatientDashboard() {
                       </tr>
                     </thead>
                     <tbody className="text-xs text-dark">
-                      {[
-                        { drug: 'Amoxicillin 250mg', dose: '1-0-1 After Food', doc: 'Dr. Connor', date: '2026-06-25' },
-                        { drug: 'Paracetamol 500mg', dose: '1-1-1 SOS Fever', doc: 'Dr. Connor', date: '2026-06-25' },
-                        { drug: 'Lipitor 10mg', dose: '0-0-1 Nightly', doc: 'Dr. Banner', date: '2026-05-10' }
-                      ].filter(p => p.drug.toLowerCase().includes(searchTerm.toLowerCase()) || p.doc.toLowerCase().includes(searchTerm.toLowerCase())).map((p, idx) => (
+                      {([] as any[]).filter((p: any) => p.drug.toLowerCase().includes(searchTerm.toLowerCase()) || p.doc.toLowerCase().includes(searchTerm.toLowerCase())).map((p, idx) => (
                         <tr key={idx} className="border-b border-accent/15 hover:bg-accent/10">
                           <td className="py-2.5 px-4 font-bold text-dark">{p.drug}</td>
                           <td className="py-2.5 px-4 text-secondary/70">{p.dose}</td>
@@ -783,11 +811,7 @@ export default function PatientDashboard() {
                       </tr>
                     </thead>
                     <tbody className="text-xs text-dark">
-                      {[
-                        { name: 'Complete Blood Count (CBC)', src: 'MedLens Upload', flag: 'High WBC', date: '2026-07-02' },
-                        { name: 'Lipid Profile', src: 'City Gen Lab', flag: 'Elevated Cholesterol', date: '2026-05-11' },
-                        { name: 'Chest X-Ray', src: 'St. Jude Radiology', flag: 'Normal Clear', date: '2026-04-15' }
-                      ].filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase())).map((r, idx) => (
+                      {([] as any[]).filter((r: any) => r.name.toLowerCase().includes(searchTerm.toLowerCase())).map((r, idx) => (
                         <tr key={idx} className="border-b border-accent/15 hover:bg-accent/10">
                           <td className="py-2.5 px-4 font-bold text-dark">{r.name}</td>
                           <td className="py-2.5 px-4 text-secondary/70">{r.src}</td>

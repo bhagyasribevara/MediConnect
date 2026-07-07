@@ -295,12 +295,85 @@ class AIAlert(db.Model):
     confidence = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Phase 1: New Application & System Models
+# ═══════════════════════════════════════════════════════════════════════════
 
-class DistrictAdminProfile(db.Model):
-    __tablename__ = 'district_admin_profiles'
+class OrganDonationRegistry(db.Model):
+    __tablename__ = 'organ_donation_registry'
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
+    organ_type = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.Enum('Registered', 'Available', 'Transplanted'), default='Registered')
+    hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    district_id = db.Column(db.Integer, db.ForeignKey('districts.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
-    user = db.relationship('User', backref=db.backref('district_admin_profile', uselist=False))
-    district = db.relationship('District', backref='admins')
+    user = db.relationship('User', backref='notifications')
+
+class AuditLog(db.Model):
+    __tablename__ = 'audit_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    action = db.Column(db.String(255), nullable=False)
+    ip_address = db.Column(db.String(50))
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class DiseaseReport(db.Model):
+    __tablename__ = 'disease_reports'
+    id = db.Column(db.Integer, primary_key=True)
+    disease_name = db.Column(db.String(100), nullable=False)
+    cases_count = db.Column(db.Integer, default=1)
+    district_id = db.Column(db.Integer, db.ForeignKey('districts.id'), nullable=False)
+    report_date = db.Column(db.Date, nullable=False)
+    
+    district = db.relationship('District', backref='disease_reports')
+
+class OutbreakReport(db.Model):
+    __tablename__ = 'outbreak_reports'
+    id = db.Column(db.Integer, primary_key=True)
+    disease_name = db.Column(db.String(100), nullable=False)
+    severity = db.Column(db.String(50), nullable=False)
+    district_id = db.Column(db.Integer, db.ForeignKey('districts.id'), nullable=False)
+    date_declared = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    status = db.Column(db.String(50), default='Active')
+
+class ResourceTransfer(db.Model):
+    __tablename__ = 'resource_transfers'
+    id = db.Column(db.Integer, primary_key=True)
+    item_type = db.Column(db.Enum('Medicine', 'Doctor', 'Bed', 'Ambulance', 'Oxygen', 'Blood'), nullable=False)
+    item_name = db.Column(db.String(100))
+    quantity = db.Column(db.Integer, nullable=False)
+    from_hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=False)
+    to_hospital_id = db.Column(db.Integer, db.ForeignKey('hospitals.id'), nullable=False)
+    status = db.Column(db.Enum('Pending', 'Approved', 'Completed', 'Rejected'), default='Pending')
+    requested_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class Payment(db.Model):
+    __tablename__ = 'payments'
+    id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patients.id'), nullable=False)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointments.id'), nullable=True)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
+    payment_method = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.Enum('Pending', 'Completed', 'Failed', 'Refunded'), default='Pending')
+    transaction_id = db.Column(db.String(100), unique=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+class SystemSetting(db.Model):
+    __tablename__ = 'system_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    setting_key = db.Column(db.String(100), unique=True, nullable=False)
+    setting_value = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+

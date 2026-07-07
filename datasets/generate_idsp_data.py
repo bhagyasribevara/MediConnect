@@ -5,8 +5,8 @@ import random
 from datetime import datetime, timedelta
 
 # Configuration
-GEOGRAPHY_FILE = "c:/Users/yusuf/OneDrive/Desktop/Mediconnet_off/MediConnect/datasets/21838- Dataful/list-of-states-districts-sub-districts-and-villages-along-with-their-lgd-codes-as-of-2-july-2026.csv"
-OUTPUT_DIR = "c:/Users/yusuf/OneDrive/Desktop/Mediconnet_off/MediConnect/datasets/indian_statistics_datasets"
+GEOGRAPHY_FILE = os.path.join(os.path.dirname(__file__), "21838- Dataful", "list-of-states-districts-sub-districts-and-villages-along-with-their-lgd-codes-as-of-2-july-2026.csv")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "indian_statistics_datasets")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "idsp_simulated_data.csv")
 DISEASES = ["Dengue", "Malaria", "Typhoid", "Chikungunya"]
 WEEKS = 156 # 3 years of weekly data

@@ -11,8 +11,8 @@ warnings.filterwarnings('ignore')
 
 TF_AVAILABLE = False
 
-DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "..", "datasets", "indian_statistics_datasets", "idsp_simulated_data.csv")
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "models")
+DATASET_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "datasets", "indian_statistics_datasets", "idsp_simulated_data.csv")
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "models")
 
 # We look back 4 weeks to predict the 5th week
 LOOK_BACK = 4

@@ -62,6 +62,12 @@ def create_app(config_class=Config):
     app.register_blueprint(district_bp, url_prefix='/api/predict')
     app.register_blueprint(model_bp, url_prefix='/api/models')
 
+    # ─── Phase 1 Blueprints ──────────────────────────────────────
+    from routes.disease_routes import disease_bp
+    from routes.resource_routes import resource_bp
+    app.register_blueprint(disease_bp, url_prefix='/api/disease')
+    app.register_blueprint(resource_bp, url_prefix='/api/resource')
+
     @app.route('/api/health')
     def health_check():
         from services.model_registry import registry

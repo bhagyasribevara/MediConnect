@@ -1,8 +1,6 @@
 # pyrefly: ignore [unexpected-keyword]
 # pyright: ignore[reportCallIssue]
 import os
-from google import genai
-from google.genai import types
 from flask import Blueprint, request, jsonify
 from dashboard import token_required
 from models import db, PatientRecord, Patient
@@ -10,10 +8,17 @@ from models import db, PatientRecord, Patient
 medlens_bp = Blueprint('medlens', __name__)
 
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
-if gemini_api_key:
-    client = genai.Client(api_key=gemini_api_key)
-else:
-    client = None
+_medlens_client = None
+
+def get_medlens_client():
+    global _medlens_client
+    if _medlens_client is None and gemini_api_key:
+        try:
+            from google import genai
+            _medlens_client = genai.Client(api_key=gemini_api_key)
+        except Exception as e:
+            print(f"Failed to initialize MedLens Gemini client: {e}")
+    return _medlens_client
 
 @medlens_bp.route('/upload', methods=['POST'])
 @token_required
@@ -46,7 +51,9 @@ def upload_report(current_user):
     """
 
     try:
+        client = get_medlens_client()
         assert client is not None
+        from google.genai import types
         response = client.models.generate_content(
             model='gemini-1.5-flash',
             contents=report_text,

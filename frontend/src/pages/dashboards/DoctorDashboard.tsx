@@ -143,10 +143,7 @@ export default function DoctorDashboard() {
 
   // MedLens Reviews
   const [selectedReport, setSelectedReport] = useState<any>(null);
-  const [reportsToReview, setReportsToReview] = useState<any[]>([
-    { id: 101, patientName: 'Aarav Kumar', reportType: 'Blood Report', uploadDate: '2026-07-02', ocrText: 'Glucose: 155 mg/dL (High Fasting), Hemoglobin: 14 g/dL', summary: 'Fasting glucose is significantly elevated, indicating insulin resistance.', abnormal: ['Fasting Glucose: 155 mg/dL (High)'], recommendations: ['Restrict refined sugar intake.', 'Perform HbA1c test for confirmation.'] },
-    { id: 102, patientName: 'Priya Sharma', reportType: 'Lipid Panel', uploadDate: '2026-07-01', ocrText: 'Cholesterol Total: 240 mg/dL (Elevated), LDL: 160 mg/dL (High)', summary: 'Total and LDL cholesterol are high, indicating risk of cardiovascular strain.', abnormal: ['Total Cholesterol: 240 mg/dL (Elevated)', 'LDL Cholesterol: 160 mg/dL (High)'], recommendations: ['Prescribe low-fat Mediterranean diet.', 'Begin low-dose Statin therapy.'] }
-  ]);
+  const [reportsToReview, setReportsToReview] = useState<any[]>([]);
 
   const [leaveForm, setLeaveForm] = useState({ date: '', reason: '' });
   const [shiftForm, setShiftForm] = useState({ start: '09:00', end: '10:00', max: 10 });
@@ -275,38 +272,12 @@ export default function DoctorDashboard() {
 
 
   // ─── Sample data for the enhanced dashboard ────────────────────────────
-  const todaysAppointments = [
-    { time: '09:30 AM', name: 'Rohan Sen', mrn: 'MC-2941', age: '45 Y / M', type: 'Follow-up', status: 'Next', statusColor: 'bg-blue-100 text-blue-700' },
-    { time: '10:15 AM', name: 'Priya Sharma', mrn: 'MC-2942', age: '32 Y / F', type: 'Consultation', status: 'Upcoming', statusColor: 'bg-amber-100 text-amber-700' },
-    { time: '11:00 AM', name: 'Anil Kumar', mrn: 'MC-2943', age: '60 Y / M', type: 'Follow-up', status: 'Upcoming', statusColor: 'bg-amber-100 text-amber-700' },
-    { time: '11:45 AM', name: 'Neha Patel', mrn: 'MC-2944', age: '28 Y / F', type: 'Consultation', status: 'Upcoming', statusColor: 'bg-amber-100 text-amber-700' },
-    { time: '12:30 PM', name: 'Suresh Gupta', mrn: 'MC-2945', age: '50 Y / M', type: 'Consultation', status: 'Upcoming', statusColor: 'bg-amber-100 text-amber-700' },
-  ];
-
-  const aiInsights = [
-    { icon: '🦠', text: 'High risk of Influenza cases in your area this week.', color: 'bg-red-50 border-red-100' },
-    { icon: '💊', text: 'ORS and Paracetamol stock may run low in 5 days.', color: 'bg-amber-50 border-amber-100' },
-    { icon: '📈', text: '18% increase in patients compared to last week.', color: 'bg-blue-50 border-blue-100' },
-  ];
-
-  const recentPatients = [
-    { name: 'Rohan Sen', mrn: 'MC-2941', time: 'Today, 09:30 AM', type: 'Follow-up', typeColor: 'bg-blue-100 text-blue-700' },
-    { name: 'Priya Sharma', mrn: 'MC-2942', time: 'Today, 10:15 AM', type: 'Consultation', typeColor: 'bg-secondary/15 text-secondary' },
-    { name: 'Anil Kumar', mrn: 'MC-2943', time: 'Today, 11:00 AM', type: 'Consultation', typeColor: 'bg-secondary/15 text-secondary' },
-  ];
-
-  const scheduleItems = [
-    { time: '09:00 AM - 01:00 PM', label: 'OPD - General Consultation', color: 'bg-secondary' },
-    { time: '01:00 PM - 02:00 PM', label: 'Lunch Break', color: 'bg-amber-400' },
-    { time: '02:00 PM - 05:00 PM', label: 'OPD - Follow-ups', color: 'bg-blue-500' },
-    { time: '05:00 PM - 06:00 PM', label: 'Admin & Reports Review', color: 'bg-purple-500' },
-  ];
-
-  const notificationsData = [
-    { icon: '📋', text: 'Lab report for Rohan Sen is pending AI validation.', time: '10 mins ago', color: 'text-amber-500' },
-    { icon: '🚨', text: 'ICU bed requested for Patient ID MC-2980 at City Hospital.', time: '25 mins ago', color: 'text-red-500' },
-    { icon: '📅', text: 'New appointment booked by Neha Patel for tomorrow.', time: '1 hour ago', color: 'text-blue-500' },
-  ];
+  // ─── Data Arrays (Now expecting manual input / API calls) ──────────────
+  const todaysAppointments: any[] = [];
+  const aiInsights: any[] = [];
+  const recentPatients: any[] = [];
+  const scheduleItems: any[] = [];
+  const notificationsData: any[] = [];
 
   return (
     <DashboardLayout 

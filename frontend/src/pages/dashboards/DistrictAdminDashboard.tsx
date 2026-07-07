@@ -135,30 +135,15 @@ export default function DistrictAdminDashboard() {
   }, []);
 
   // Resource suggestions (mandal localized)
-  const [redistributions, setRedistributions] = useState<any[]>([
-    { id: 501, item: 'ORS Sachets', qty: 500, from: 'Vizianagaram Government General Hospital', to: 'Nellimarla Primary Health Center', status: 'Pending Approval', reason: 'High demand predicted' },
-    { id: 502, item: 'Paracetamol 500mg', qty: 300, from: 'Bobbili Community Health Center', to: 'Cheepurupalli PHC Sector 2', status: 'Pending Approval', reason: 'Low stock alert' },
-    { id: 503, item: 'ICU Beds', qty: 2, from: 'District Central Hospital', to: 'Salur Community Health Center', status: 'Pending Approval', reason: 'High occupancy' }
-  ]);
+  const [redistributions, setRedistributions] = useState<any[]>([]);
 
   // Registered facilities roster
   const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
   const [facilityForm, setFacilityForm] = useState({ name: '', type: 'Hospital', beds: 10, compliance: 95 });
-  const [facilitiesList, setFacilitiesList] = useState<any[]>([
-    { id: 1, name: 'Vizianagaram Government General Hospital', type: 'Hospital', beds: 220, compliance: 98, load: 'High' },
-    { id: 2, name: 'Bobbili Community Health Center', type: 'CHC', beds: 60, compliance: 94, load: 'Medium' },
-    { id: 3, name: 'Nellimarla Primary Health Center', type: 'PHC', beds: 15, compliance: 92, load: 'Low' },
-    { id: 4, name: 'Cheepurupalli Community Health Center', type: 'CHC', beds: 45, compliance: 96, load: 'Low' },
-    { id: 5, name: 'Salur Area Hospital', type: 'Hospital', beds: 80, compliance: 95, load: 'High' }
-  ]);
+  const [facilitiesList, setFacilitiesList] = useState<any[]>([]);
 
   // Real-time alerts list
-  const [criticalAlerts] = useState<any[]>([
-    { id: 1, text: 'Dengue cases rising in Vizianagaram Mandal', time: '20 mins ago', type: 'high' },
-    { id: 2, text: 'ORS shortage in 3 PHCs near Cheepurupalli', time: '35 mins ago', type: 'warning' },
-    { id: 3, text: 'ICU bed low at Salur Area Hospital', time: '1 hour ago', type: 'medium' },
-    { id: 4, text: 'High patient load at Nellimarla PHC', time: '1 hour ago', type: 'info' }
-  ]);
+  const [criticalAlerts] = useState<any[]>([]);
 
   // Map Hover Interactive State
   const [hoveredRegion, setHoveredRegion] = useState<{ name: string; cases: number; risk: string } | null>(null);
@@ -328,14 +313,7 @@ export default function DistrictAdminDashboard() {
                 </div>
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={[
-                      { name: 'Jan', cases: 400 },
-                      { name: 'Feb', cases: 300 },
-                      { name: 'Mar', cases: 550 },
-                      { name: 'Apr', cases: 450 },
-                      { name: 'May', cases: 750 },
-                      { name: 'Jun', cases: 680 },
-                    ]} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <AreaChart data={[]} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorCases" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#00BFA6" stopOpacity={0.35}/>
@@ -569,13 +547,7 @@ export default function DistrictAdminDashboard() {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  {[
-                    { label: 'General Ward', val: 72 },
-                    { label: 'ICU', val: 84 },
-                    { label: 'Pediatric', val: 58 },
-                    { label: 'Maternity', val: 46 },
-                    { label: 'Emergency', val: 90 },
-                  ].map((item, idx) => (
+                  {([] as any[]).map((item, idx) => (
                     <div key={idx} className="space-y-1">
                       <div className="flex justify-between text-[11px] font-bold text-dark">
                         <span>{item.label}</span>
@@ -604,13 +576,7 @@ export default function DistrictAdminDashboard() {
                   </button>
                 </div>
                 <div className="space-y-3.5">
-                  {[
-                    { id: 1, name: 'Vizianagaram Mandal', disease: 'Dengue Risk', risk: 'High' },
-                    { id: 2, name: 'Bobbili Mandal', disease: 'Dengue Risk', risk: 'High' },
-                    { id: 3, name: 'Salur Mandal', disease: 'Malaria Risk', risk: 'Medium' },
-                    { id: 4, name: 'Gajapathinagaram Mandal', disease: 'Dengue Risk', risk: 'Medium' },
-                    { id: 5, name: 'Nellimarla Mandal', disease: 'Chikungunya Risk', risk: 'Low' },
-                  ].map((area) => (
+                  {([] as any[]).map((area) => (
                     <div key={area.id} className="flex items-center justify-between gap-2.5 text-[11px] font-bold text-dark">
                       <div className="flex items-center gap-2">
                         <span className="w-5 h-5 bg-accent text-secondary font-black rounded-lg flex items-center justify-center text-[10px]">{area.id}</span>
@@ -681,11 +647,7 @@ export default function DistrictAdminDashboard() {
                   <button onClick={() => setActiveTab('outbreaks')} className="text-[9px] text-secondary font-bold hover:underline">View All</button>
                 </div>
                 <div className="space-y-3 overflow-y-auto max-h-32 text-[10px]">
-                  {[
-                    { id: 1, text: 'Dengue Outbreak in Vizianagaram', risk: 'High', time: '20m ago' },
-                    { id: 2, text: 'Malaria Cases in Salur', risk: 'Medium', time: '1h ago' },
-                    { id: 3, text: 'Chikungunya in Nellimarla', risk: 'Low', time: '3h ago' }
-                  ].map(item => (
+                  {([] as any[]).map(item => (
                     <div key={item.id} className="flex justify-between items-center border-b border-accent/15 pb-1">
                       <div className="flex flex-col gap-0.5">
                         <span className="font-bold text-dark truncate max-w-[100px]">{item.text}</span>
@@ -705,19 +667,8 @@ export default function DistrictAdminDashboard() {
                   <h3 className="text-[10px] font-extrabold uppercase text-dark tracking-wider">Appointments & OPD</h3>
                   <button onClick={() => alert("Redirecting to Appointments...")} className="text-[9px] text-secondary font-bold hover:underline">View All</button>
                 </div>
-                <div className="space-y-2 text-[10px] font-bold text-dark">
-                  <div className="flex justify-between border-b border-accent/15 pb-1.5">
-                    <span className="text-secondary/70">Today's Appointments:</span><span>356</span>
-                  </div>
-                  <div className="flex justify-between border-b border-accent/15 pb-1.5">
-                    <span className="text-secondary/70">Completed OPD:</span><span>1,542</span>
-                  </div>
-                  <div className="flex justify-between border-b border-accent/15 pb-1.5">
-                    <span className="text-secondary/70">Pending Appointments:</span><span>214</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-secondary/70">Walk-in Patients:</span><span>412</span>
-                  </div>
+                <div className="space-y-2 text-[10px] font-bold text-dark flex items-center justify-center p-4">
+                  <span className="text-secondary/70">No Data</span>
                 </div>
               </div>
 

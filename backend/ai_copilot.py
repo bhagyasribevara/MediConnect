@@ -1,17 +1,22 @@
 import os
 from flask import Blueprint, request, jsonify
 from dashboard import token_required
-from google import genai
-from google.genai import types
 
 copilot_bp = Blueprint('copilot', __name__)
 
-# Configure Gemini AI using the key from .env
+# Configure Gemini AI using the key from .env (lazy-loaded to avoid SSL hang on import)
 gemini_api_key = os.environ.get("GEMINI_API_KEY")
-if gemini_api_key:
-    client = genai.Client(api_key=gemini_api_key)
-else:
-    client = None
+_client = None
+
+def get_genai_client():
+    global _client
+    if _client is None and gemini_api_key:
+        try:
+            from google import genai
+            _client = genai.Client(api_key=gemini_api_key)
+        except Exception as e:
+            print(f"Failed to initialize Gemini client: {e}")
+    return _client
 
 def get_system_prompt_for_role(role: str) -> str:
     """Returns a tailored system prompt that dictates the AI's persona based on the user's role."""
@@ -46,7 +51,9 @@ def chat(current_user):
         if gemini_api_key == "AQ.Ab8RN6K_FDaeu70zKv9CHr5A3g1pXkYRMBKKu1N3Kr1uLZnNsg":
             raise Exception("Known invalid dummy Gemini API key. Skipping remote call for instant offline response.")
             
+        client = get_genai_client()
         assert client is not None
+        from google.genai import types
         response = client.models.generate_content(
             model='gemini-1.5-flash',
             contents=message,

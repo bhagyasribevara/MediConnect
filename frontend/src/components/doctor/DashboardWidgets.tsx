@@ -28,17 +28,11 @@ const ClayCard = ({ children, className = '' }: { children: React.ReactNode; cla
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1: AI Health Summary
 export function AIHealthSummary() {
-  const metrics = [
-    { label: "Today's Predicted Patient Load", value: "48", trend: "+12%", up: true, icon: UsersIcon, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { label: "Expected Show-ups", value: "42", trend: "High", up: true, icon: CheckCircleIcon, color: "text-green-500", bg: "bg-green-500/10" },
-    { label: "Expected No-shows", value: "6", trend: "Low", up: false, icon: UserMinusIcon, color: "text-orange-500", bg: "bg-orange-500/10" },
-    { label: "Emergency Patients", value: "3", trend: "Critical", up: true, icon: BoltIcon, color: "text-red-500", bg: "bg-red-500/10" },
-    { label: "AI Confidence", value: "94%", trend: "Stable", up: true, icon: SparklesIcon, color: "text-primary", bg: "bg-primary/10" },
-    { label: "Average Waiting Time", value: "18m", trend: "-2m", up: false, icon: ClockIcon, color: "text-purple-500", bg: "bg-purple-500/10" },
-  ];
+  const metrics: any[] = [];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {metrics.length === 0 && <div className="text-secondary/70 p-4">No Data Available</div>}
       {metrics.map((m, idx) => (
         <ClayCard key={idx} className="flex flex-col relative overflow-hidden group">
           <div className="flex justify-between items-start mb-4">
@@ -65,16 +59,7 @@ export function AIHealthSummary() {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 2: Today's Doctor Summary
 export function DoctorSummary() {
-  const stats = [
-    { label: "Patients Waiting", value: 12 },
-    { label: "Completed", value: 24 },
-    { label: "Emergencies", value: 2 },
-    { label: "Pending Labs", value: 8 },
-    { label: "Pending MedLens", value: 5 },
-    { label: "Renewals", value: 3 },
-    { label: "Follow-ups", value: 9 },
-    { label: "Telemedicine", value: 4 },
-  ];
+  const stats: any[] = [];
 
   return (
     <ClayCard>
@@ -83,6 +68,7 @@ export function DoctorSummary() {
         <h2 className="text-lg font-bold text-dark">Today's Doctor Summary</h2>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {stats.length === 0 && <div className="text-secondary/70 p-4 col-span-4">No Data Available</div>}
         {stats.map((s, idx) => (
           <div key={idx} className="p-4 rounded-xl bg-accent/5 border border-accent/10 flex flex-col items-center justify-center text-center">
             <p className="text-2xl font-black text-dark">{s.value}</p>
@@ -160,17 +146,9 @@ export function OPDLoadAndForecast() {
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 10 & 11: AI Insights & Alert Center
 export function InsightsAndAlerts() {
-  const alerts = [
-    { type: 'critical', text: 'Emergency: Patient John Doe arriving in 5 mins (Trauma)', icon: BoltIcon, color: 'text-red-600', bg: 'bg-red-500/10' },
-    { type: 'warning', text: 'High risk patient identified in queue: Sarah Smith (BP 180/110)', icon: ExclamationTriangleIcon, color: 'text-orange-600', bg: 'bg-orange-500/10' },
-    { type: 'alert', text: 'Drug Interaction Warning for Patient #102', icon: ShieldExclamationIcon, color: 'text-red-600', bg: 'bg-red-500/10' },
-  ];
+  const alerts: any[] = [];
 
-  const insights = [
-    "High OPD expected tomorrow. Increase consultation slots.",
-    "5 patients likely to miss appointments based on weather patterns.",
-    "Possible dengue surge detected in sector 4. Recommend screening.",
-  ];
+  const insights: any[] = [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
