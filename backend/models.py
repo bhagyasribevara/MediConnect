@@ -361,8 +361,6 @@ class AIAlert(db.Model):
     confidence = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-<<<<<<< HEAD
-=======
 # ═══════════════════════════════════════════════════════════════════════════
 # Phase 1: New Application & System Models
 # ═══════════════════════════════════════════════════════════════════════════
@@ -443,6 +441,3 @@ class SystemSetting(db.Model):
     setting_key = db.Column(db.String(100), unique=True, nullable=False)
     setting_value = db.Column(db.Text, nullable=False)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-
-
->>>>>>> af3e6bd19a88f5225505c135cef4c7a43378b022
